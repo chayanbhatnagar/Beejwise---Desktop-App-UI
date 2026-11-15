@@ -1,0 +1,1165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Beejwise · Plant dashboard prototype</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#EFEFEA;--card:#fff;--soft:#F4F4EF;--soft2:#EAEAE3;--line:#E4E4DC;--ink:#15150F;--ink2:#3F3F36;--mut:#77776C;--mut2:#9A9A90;
+  --lime:#E4F55F;--lime2:#D9EB4C;--red:#A12114;--redbg:#FBDFDA;--amb:#7A4A00;--ambbg:#FBEFD2;--grn:#2F6B1F;--grnbg:#E4EFD6;
+  --spring:cubic-bezier(.32,.72,0,1);--out:cubic-bezier(.22,1,.36,1);--snap:cubic-bezier(.34,1.56,.64,1);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{font-family:Outfit,system-ui,sans-serif;background:#DCDCD3;color:var(--ink);overflow:hidden;-webkit-font-smoothing:antialiased}
+button,input,textarea{font:inherit;color:inherit;border:0;background:none;outline:0}
+button{cursor:pointer;text-align:left}
+svg.ic{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.stage{position:fixed;inset:0;overflow:hidden}
+#app{position:absolute;left:50%;top:50%;width:1600px;height:900px;background:var(--bg);overflow:hidden;transform-origin:center;transform:translate(-50%,-50%) scale(var(--s,1));border-radius:calc(18px / var(--s,1))}
+.tap{transition:transform .45s var(--out),background-color .35s var(--out),color .35s var(--out),box-shadow .35s var(--out),opacity .35s}
+.tap:active{transform:scale(.965);transition-duration:.1s}
+.h1{font-size:31px;font-weight:700;letter-spacing:-.035em;line-height:1.1}
+.sub{font-size:14px;color:var(--mut);margin-top:4px}
+.lab{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--mut);font-weight:600}
+.row{display:flex;align-items:center}
+.card{background:var(--card);border-radius:22px}
+.pill{display:inline-flex;align-items:center;gap:6px;height:26px;padding:0 11px;border-radius:99px;font-size:12px;font-weight:600;white-space:nowrap}
+.p-red{background:var(--redbg);color:var(--red)}.p-amb{background:var(--ambbg);color:var(--amb)}.p-grn{background:var(--grnbg);color:var(--grn)}.p-lime{background:var(--lime);color:var(--ink)}.p-soft{background:var(--soft2);color:var(--ink2)}.p-dark{background:var(--ink);color:var(--lime)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;height:46px;padding:0 20px;border-radius:99px;font-weight:600;font-size:14.5px;white-space:nowrap}
+.btn.dark{background:var(--ink);color:#fff}.btn.white{background:#fff}.btn.lime{background:var(--lime)}.btn.soft{background:var(--soft2)}
+.btn.dark:hover{background:#2A2A22}.btn.white:hover{background:#F7F7F2}.btn.lime:hover{background:#DCEE52}
+.btn .bi{width:30px;height:30px;border-radius:99px;display:grid;place-items:center;margin-right:-12px;transition:transform .45s var(--out)}
+.btn.dark .bi{background:var(--lime);color:var(--ink)}.btn.white .bi{background:var(--soft2)}
+.btn:hover .bi{transform:rotate(90deg)}
+.btn .bi svg{width:16px;height:16px;stroke-width:2}
+.chip{display:inline-flex;align-items:center;gap:7px;height:38px;padding:0 16px;border-radius:99px;background:#fff;font-weight:600;font-size:14px;white-space:nowrap}
+.chip.on{background:var(--ink);color:#fff}
+.chip .n{min-width:22px;height:22px;border-radius:99px;display:grid;place-items:center;font-size:12px;background:var(--soft2);color:var(--ink);padding:0 6px}
+.chip.on .n{background:var(--lime)}
+.chip.sm{height:32px;padding:0 13px;font-size:13px}
+.ibox{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;background:var(--soft2);flex:none}
+.hidden{display:none!important}
+.rv{}
+.view.in .rv{animation:rise .8s var(--out) var(--d,0ms) backwards}
+@keyframes rise{from{opacity:0;transform:translateY(16px);filter:blur(4px)}}
+
+/* sidebar */
+.side{position:absolute;left:20px;top:20px;width:252px;height:860px;border-radius:28px;background:var(--lime);z-index:20}
+.logo{position:absolute;left:33px;top:20px;display:flex;align-items:center;gap:10px}
+.logo b{font-weight:400;font-size:43px;letter-spacing:-.03em;line-height:1}
+.plantsel{position:absolute;left:16px;top:86px;width:220px;height:58px;border-radius:16px;background:var(--lime2);padding:12px 14px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;transition:background .3s}
+.plantsel:hover{background:#D1E443}
+.plantsel small{display:block;font-size:12px;color:var(--ink2);font-weight:500}
+.plantsel b{font-size:17px;font-weight:700;letter-spacing:-.01em}
+.plantsel .chv{transition:transform .5s var(--spring)}
+.plantsel.open .chv{transform:rotate(180deg)}
+.pmenu{position:absolute;left:16px;top:150px;width:220px;background:#fff;border-radius:18px;padding:6px;box-shadow:0 24px 50px -16px rgba(0,0,0,.28);z-index:30;opacity:0;transform:translateY(-8px) scale(.97);transform-origin:top;pointer-events:none;transition:all .45s var(--spring)}
+.pmenu.on{opacity:1;transform:none;pointer-events:auto}
+.pmenu button{display:flex;width:100%;align-items:center;justify-content:space-between;padding:10px 12px;border-radius:12px;font-weight:600;font-size:14.5px}
+.pmenu button small{font-weight:500;color:var(--mut);font-size:12px}
+.pmenu button:hover{background:var(--soft)}
+.pmenu button.on{background:var(--lime)}
+.nav{position:absolute;left:0;top:166px;width:252px}
+.nav button{position:relative;z-index:2;display:flex;align-items:center;gap:11px;height:46px;width:220px;margin:0 0 6px 16px;padding:0 14px;border-radius:16px;font-size:15.5px;color:var(--ink2);font-weight:500;transition:color .35s}
+.nav button:hover:not(.act){background:rgba(0,0,0,.04)}
+.nav button.act{color:var(--ink);font-weight:700}
+.nav .bdg{margin-left:auto;min-width:24px;height:21px;border-radius:99px;background:var(--ink);color:var(--lime);font-size:12px;font-weight:700;display:grid;place-items:center;padding:0 7px;transition:transform .5s var(--snap)}
+.navpill{position:absolute;left:16px;top:0;width:236px;height:46px;background:var(--bg);border-radius:16px 0 0 16px;z-index:1;transition:transform .6s var(--spring)}
+.navpill::before,.navpill::after{content:"";position:absolute;right:0;width:14px;height:14px}
+.navpill::before{top:-14px;background:radial-gradient(circle at 0 0,var(--lime) 13.5px,var(--bg) 14px)}
+.navpill::after{bottom:-14px;background:radial-gradient(circle at 0 100%,var(--lime) 13.5px,var(--bg) 14px)}
+.settings{position:absolute;left:16px;bottom:22px;display:flex;align-items:center;gap:11px;height:46px;width:220px;padding:0 14px;border-radius:16px;font-size:15.5px;color:var(--ink2);font-weight:500}
+.settings:hover{background:rgba(0,0,0,.04)}
+
+/* topbar */
+.search{position:absolute;left:292px;top:20px;width:400px;height:52px;border-radius:26px;background:#fff;display:flex;align-items:center;gap:10px;padding:0 20px;z-index:10;transition:box-shadow .35s,width .5s var(--spring)}
+.search:focus-within{box-shadow:0 0 0 2px var(--lime2);width:460px}
+.search input{flex:1;font-size:15px}
+.search input::placeholder{color:var(--mut2)}
+.date{position:absolute;right:88px;top:37px;font-size:15px;z-index:10}
+.date b{font-weight:700}
+.avatar{position:absolute;right:20px;top:20px;width:52px;height:52px;border-radius:99px;background:var(--lime);display:grid;place-items:center;font-weight:700;font-size:17px;z-index:10}
+
+/* views */
+.view{position:absolute;left:292px;top:90px;width:1288px;height:810px;overflow-y:auto;overflow-x:hidden;padding-bottom:40px;visibility:hidden;scrollbar-width:none}
+.view::-webkit-scrollbar{display:none}
+.view.on{visibility:visible}
+.vhead{display:flex;align-items:flex-start;justify-content:space-between;height:73px}
+.vhead .acts{display:flex;gap:10px;margin-top:8px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.stat{display:flex;align-items:center;gap:14px;background:var(--soft2);border-radius:18px;padding:12px 16px;height:62px}
+.stat .ibox{width:34px;height:34px;border-radius:10px;background:rgba(255,255,255,.7)}
+.stat .ibox svg{width:17px;height:17px}
+.stat small{display:block;font-size:13px;color:var(--mut)}
+.stat b{font-size:21px;font-weight:700;letter-spacing:-.02em}
+.stat span{font-size:13px;color:var(--mut);margin-left:4px}
+.stat.r{background:var(--redbg)}.stat.r b,.stat.r small,.stat.r span{color:var(--red)}
+.stat.a{background:var(--ambbg)}.stat.a b,.stat.a small,.stat.a span{color:var(--amb)}
+.stat.g{background:var(--grnbg)}.stat.g b,.stat.g small,.stat.g span{color:var(--grn)}
+.stat.w{background:#fff}
+.notice{display:flex;align-items:center;gap:10px;height:40px;border-radius:14px;background:#F4F7DA;padding:0 8px 0 14px;font-size:13px;color:var(--ink2);margin-top:14px}
+.notice .pill{margin-left:auto;background:#fff}
+.tbl{width:100%;border-collapse:collapse}
+.tbl th{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--mut);font-weight:600;text-align:left;padding:0 0 12px}
+.tbl td{padding:11px 0;border-top:1px solid var(--line);font-size:14px;vertical-align:middle}
+.tbl td small{display:block;font-size:12px;color:var(--mut);margin-top:2px}
+.tbl tr.rowl{transition:background .25s}
+.tbl tr.rowl:hover{background:var(--soft)}
+
+/* home */
+.pcards{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.pcard{background:#fff;border-radius:24px;padding:16px 18px;height:130px;cursor:pointer;transition:background .5s var(--out),transform .5s var(--out),box-shadow .5s var(--out)}
+.pcard:hover{transform:translateY(-2px);box-shadow:0 14px 30px -18px rgba(0,0,0,.25)}
+.pcard.on{background:var(--lime)}
+.pcard .t{display:flex;justify-content:space-between}
+.pcard b{font-size:16px;font-weight:700}
+.pcard small{font-size:12px;color:var(--mut)}
+.pcard.on small{color:var(--ink2)}
+.pcard .num{display:flex;align-items:center;gap:12px;margin-top:10px}
+.pcard .num strong{font-size:27px;font-weight:700;letter-spacing:-.03em;display:block;line-height:1}
+.ring{position:relative;width:46px;height:46px}
+.ring svg{transform:rotate(-90deg)}
+.ring span{position:absolute;inset:0;display:grid;place-items:center;font-size:12.5px;font-weight:700}
+.ring .tr{stroke:var(--line)}.pcard.on .ring .tr{stroke:rgba(0,0,0,.1)}
+.ring .pg{stroke:var(--ink);transition:stroke-dashoffset 1.4s var(--out)}
+.season{background:var(--soft);border-radius:24px;padding:18px 20px;height:215px;position:relative}
+.season h3,.cardh{font-size:18px;font-weight:700;letter-spacing:-.02em}
+.health{display:grid;gap:9px}
+.health .hr{display:flex;align-items:center;gap:14px;background:#fff;border-radius:16px;height:55px;padding:0 16px;cursor:pointer;transition:transform .4s var(--out)}
+.health .hr:hover{transform:translateX(3px)}
+.health .hr b{font-size:21px;font-weight:700;letter-spacing:-.02em;display:block;line-height:1.1}
+.health .hr small{font-size:13px;color:var(--mut)}
+.health .hr em{margin-left:auto;font-style:normal;font-size:12.5px;font-weight:600}
+.needs{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:14px}
+.needs button{display:flex;align-items:center;gap:13px;background:var(--soft);border-radius:16px;height:60px;padding:0 14px;transition:background .3s,transform .4s var(--out)}
+.needs button:hover{background:var(--soft2);transform:translateY(-1px)}
+.needs b{font-size:14.5px;font-weight:600;display:block}
+.needs small{font-size:13px;color:var(--mut)}
+.bar{height:7px;border-radius:9px;background:var(--line);overflow:hidden;width:210px;margin-top:6px}
+.bar i{display:block;height:100%;border-radius:9px;transform-origin:left}
+.view.in .bar i{animation:grow 1.2s var(--out) .3s backwards}
+@keyframes grow{from{transform:scaleX(0)}}
+.av{width:32px;height:32px;border-radius:10px;background:var(--soft2);display:grid;place-items:center;font-weight:700;font-size:12.5px;flex:none}
+.av.l{background:var(--lime)}
+
+/* sessions */
+.srow{background:#fff;border-radius:22px;margin-top:12px;overflow:hidden}
+.srow .hd{display:flex;align-items:center;gap:14px;padding:16px 18px;cursor:pointer}
+.srow .hd b{font-size:19px;font-weight:700;letter-spacing:-.02em;display:block}
+.srow .hd small{font-size:13px;color:var(--mut)}
+.srow .rt{margin-left:auto;text-align:right}
+.srow .rt small{display:block;margin-top:6px;color:var(--ink2)}
+.exp{width:34px;height:34px;border-radius:99px;background:var(--soft2);display:grid;place-items:center;transition:transform .55s var(--spring),background .3s}
+.srow.open .exp{transform:rotate(90deg)}
+.srow .body{display:grid;grid-template-rows:0fr;transition:grid-template-rows .6s var(--spring)}
+.srow.open .body{grid-template-rows:1fr}
+.srow .body>div{overflow:hidden}
+.stepper{margin:0 18px;background:var(--soft);border-radius:18px;padding:18px 30px 14px;position:relative}
+.stepper .ln{position:absolute;left:12.5%;right:12.5%;top:30px;height:2px;background:var(--line)}
+.stepper .ln i{display:block;height:100%;background:var(--ink);transform-origin:left;transition:transform .8s var(--spring)}
+.steps{display:grid;grid-template-columns:repeat(4,1fr);position:relative}
+.steps div{text-align:center;font-size:13px;color:var(--ink2)}
+.steps i{width:26px;height:26px;border-radius:99px;margin:0 auto 9px;display:grid;place-items:center;background:#fff;box-shadow:inset 0 0 0 2px var(--line);color:#fff;transition:all .5s var(--snap)}
+.steps i svg{width:13px;height:13px;stroke-width:3}
+.steps .d i{background:var(--ink);box-shadow:none}
+.steps .n i{background:var(--lime);box-shadow:none;color:var(--ink)}
+.steps .n{font-weight:700;color:var(--ink)}
+.fields{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;padding:16px 18px 0}
+.field label,.flab{display:block;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--mut);font-weight:600;margin-bottom:8px}
+.inp{height:48px;border-radius:14px;background:#fff;box-shadow:inset 0 0 0 1.5px var(--line);display:flex;align-items:center;padding:0 15px;font-size:15px;font-weight:600;width:100%;transition:box-shadow .3s}
+.inp:focus,.inp:focus-within{box-shadow:inset 0 0 0 2px var(--lime2)}
+.inp.s{background:var(--soft);box-shadow:none}
+.sfoot{display:flex;align-items:center;gap:10px;padding:16px 18px 18px;font-size:13px;color:var(--mut)}
+.sfoot .btn{height:44px}
+.sfoot .btn:first-of-type{margin-left:auto}
+
+/* quality */
+.decision{background:var(--soft);border-radius:20px;padding:16px 18px;margin-top:12px;transition:opacity .4s,transform .5s var(--spring)}
+.decision .t{display:flex;align-items:flex-start;justify-content:space-between}
+.decision b{font-size:17px;font-weight:700;letter-spacing:-.01em}
+.decision small{font-size:13px;color:var(--mut);display:block;margin-top:2px}
+.tests{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:14px 0}
+.tests div{background:#fff;border-radius:14px;padding:10px 12px}
+.tests span{font-size:12px;color:var(--mut);display:block}
+.tests b{font-size:15.5px;display:block;margin:2px 0}
+.tests em{font-style:normal;font-size:11px;color:var(--mut)}
+.tests .bad b{color:var(--red)}.tests .warn b{color:var(--amb)}
+.dfoot{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--ink2)}
+.dfoot .btn{height:38px;padding:0 16px;font-size:14px}
+.dfoot .btn:first-of-type{margin-left:auto}
+.chart{background:var(--soft);border-radius:22px;padding:18px 20px;height:419px;position:relative}
+.bars{position:absolute;left:62px;right:22px;bottom:68px;height:200px;display:flex;align-items:flex-end;gap:12px}
+.bars i{flex:1;border-radius:6px 6px 3px 3px;background:var(--ink);transform-origin:bottom;transition:transform .3s}
+.view.in .bars i{animation:barup 1s var(--out) backwards}
+@keyframes barup{from{transform:scaleY(0)}}
+.bars i.lo{background:#C98378}
+.bars i:hover{filter:brightness(1.3)}
+.std{background:#fff;border-radius:22px;padding:18px 20px;margin-top:14px;height:201px}
+.std .r{display:grid;grid-template-columns:1fr 90px 70px;font-size:14px;padding:6px 0;border-top:1px solid var(--line)}
+.std .r:first-of-type{border:0}
+.std .r span:nth-child(2){text-align:right;color:var(--mut)}
+.std .r b{text-align:right}
+
+/* storage */
+.baystrip{display:grid;grid-template-columns:repeat(8,1fr) 98px;gap:10px;margin-top:16px}
+.baycard{background:var(--soft);border-radius:16px;padding:12px;cursor:pointer;transition:all .45s var(--out);text-align:left}
+.baycard:hover{transform:translateY(-2px)}
+.baycard.on{background:var(--lime)}
+.baycard .t{display:flex;justify-content:space-between;align-items:baseline}
+.baycard b{font-size:15px;font-weight:700}
+.baycard em{font-style:normal;font-size:12px;font-weight:600}
+.baycard .bar{width:auto;height:6px;margin:9px 0 7px;background:rgba(0,0,0,.08)}
+.baycard small{font-size:11.5px;color:var(--mut)}
+.addbay{border-radius:16px;box-shadow:inset 0 0 0 1.5px var(--line);display:grid;place-items:center;font-size:12.5px;font-weight:600;cursor:pointer;transition:background .3s}
+.addbay:hover{background:var(--soft)}
+.addbay div{text-align:center}
+.addbay i{width:28px;height:28px;border-radius:99px;background:var(--ink);color:var(--lime);display:grid;place-items:center;margin:0 auto 6px}
+.addbay i svg{width:15px;height:15px;stroke-width:2.2}
+.mini{height:32px;padding:0 13px;border-radius:99px;font-size:13px;font-weight:600}
+.mini.w{background:#fff;box-shadow:inset 0 0 0 1.5px var(--line)}.mini.l{background:var(--lime)}.mini.d{background:var(--soft2);color:var(--mut2);cursor:not-allowed}
+.mini.w:hover{background:var(--soft)}
+
+/* dispatch */
+.load{background:var(--soft);border-radius:20px;padding:16px 18px;margin-top:12px}
+.load .t{display:flex;align-items:center;gap:13px}
+.load .t b{font-size:18px;font-weight:700;letter-spacing:-.01em;display:block}
+.load .t small{font-size:13px;color:var(--mut)}
+.load .rt{margin-left:auto;text-align:right}
+.load .rt small{display:block;margin-top:6px}
+.track{position:relative;display:grid;grid-template-columns:repeat(4,1fr);margin:18px 0 14px;font-size:12px;color:var(--mut);text-align:center}
+.track::before{content:"";position:absolute;left:12.5%;right:12.5%;top:7px;height:2px;background:var(--line)}
+.track .fill{position:absolute;left:12.5%;top:7px;height:2px;background:var(--ink);transition:width .9s var(--spring)}
+.track div{position:relative}
+.track i{display:block;width:16px;height:16px;border-radius:99px;margin:0 auto 7px;background:#fff;box-shadow:inset 0 0 0 2px var(--line);transition:all .5s var(--snap)}
+.track .d i{background:var(--ink);box-shadow:none}.track .n i{background:var(--lime);box-shadow:inset 0 0 0 3px #fff,0 0 0 2px var(--ink)}
+.track .d,.track .n{color:var(--ink)}
+.wait{background:#fff;border-radius:22px;padding:18px 20px}
+.wl{display:flex;align-items:center;gap:10px;padding:10px 0;border-top:1px solid var(--line)}
+.wl b{font-size:14px;display:block}.wl small{font-size:12px;color:var(--mut)}
+.wl .ago{margin-left:auto;font-size:12px;color:var(--mut)}
+.plus{width:30px;height:30px;border-radius:99px;background:var(--soft2);display:grid;place-items:center;transition:all .4s var(--snap)}
+.plus:hover{background:var(--lime)}
+.plus.done{background:var(--ink);color:var(--lime)}
+.plus svg{width:14px;height:14px;stroke-width:2.2}
+.wbars{display:flex;align-items:flex-end;gap:10px;height:96px;margin-top:14px}
+.wbars div{flex:1;text-align:center;font-size:11px;color:var(--mut)}
+.wbars i{display:block;background:var(--ink);border-radius:6px;margin-bottom:6px;transform-origin:bottom}
+.view.in .wbars i{animation:barup .9s var(--out) backwards}
+
+/* lots */
+.lfilter{display:flex;align-items:center;gap:8px;background:#fff;border-radius:20px;padding:12px 16px;margin-bottom:14px}
+.seg{display:flex;background:var(--soft2);border-radius:99px;padding:3px;position:relative}
+.seg button{position:relative;z-index:1;height:30px;padding:0 15px;font-size:13.5px;font-weight:600;border-radius:99px;color:var(--ink2);transition:color .3s}
+.seg button.on{color:#fff}
+.seg .k{position:absolute;top:3px;height:30px;border-radius:99px;background:var(--ink);transition:transform .55s var(--spring),width .55s var(--spring)}
+.gpill{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 11px;border-radius:99px;font-size:12px;font-weight:600}
+.gpill svg{width:14px;height:14px}
+.dayh td{padding:18px 0 8px!important;border-top:0!important;white-space:nowrap}
+.dayh b{font-size:16px;font-weight:700;letter-spacing:-.01em}
+.dayh .n{display:inline-grid;place-items:center;min-width:22px;height:22px;border-radius:99px;background:var(--lime);font-size:12px;font-weight:700;margin:0 6px 0 10px}
+.chev{width:30px;height:30px;border-radius:99px;background:var(--soft2);display:grid;place-items:center;margin-left:auto;transition:all .4s var(--out)}
+tr:hover .chev{background:var(--ink);color:var(--lime);transform:translateX(2px)}
+.chev svg{width:15px;height:15px}
+
+/* connectors */
+.sathi{background:#fff;border-radius:24px;padding:18px 20px}
+.sw{width:46px;height:28px;border-radius:99px;background:#DCDCD4;position:relative;transition:background .4s var(--out);flex:none;cursor:pointer}
+.sw::after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:99px;background:#fff;box-shadow:0 2px 6px rgba(0,0,0,.2);transition:transform .55s var(--snap)}
+.sw.on{background:var(--ink)}.sw.on::after{transform:translateX(18px)}
+.goes{display:flex;gap:14px;padding:13px 0;border-top:1px solid var(--line);align-items:flex-start}
+.goes b{font-size:15px;font-weight:600;display:block}
+.goes p{font-size:12.5px;color:var(--mut);margin-top:2px}
+.goes .as{font-size:12px;color:var(--mut);margin-top:6px}.goes .as b{display:inline;font-size:12px;color:var(--ink)}
+.goes .rt{margin-left:auto;display:flex;flex-direction:column;align-items:flex-end;gap:8px;font-size:12px;color:var(--mut)}
+.act{display:flex;gap:10px;padding:9px 0}
+.act i{width:8px;height:8px;border-radius:9px;background:var(--grn);margin-top:6px;flex:none}
+.act i.r{background:var(--red)}.act i.a{background:#C9881A}
+.act b{font-size:13px;font-weight:500;display:block}.act small{font-size:11.5px;color:var(--mut)}
+.spin{width:16px;height:16px;border-radius:99px;border:2.2px solid rgba(0,0,0,.2);border-top-color:var(--ink);animation:sp .7s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+
+/* calendar */
+.cal{background:#fff;border-radius:24px;padding:18px 20px;height:790px}
+.cgrid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px}
+.cgrid .wd{font-size:11px;color:var(--mut);font-weight:600;padding:12px 4px 6px}
+.cday{height:98px;min-width:0;border-radius:14px;background:var(--soft);padding:8px 9px;position:relative;cursor:pointer;transition:all .4s var(--out);text-align:left;display:flex;flex-direction:column;gap:5px}
+.cday:hover{background:var(--soft2)}
+.cday.sel{box-shadow:inset 0 0 0 2px var(--ink)}
+.cday .dn{font-size:14px;font-weight:600;display:flex;justify-content:space-between;align-items:center}
+.cday .dn em{font-style:normal;font-size:10px;color:var(--red);font-weight:600}
+.cday.today .dn span{width:26px;height:26px;border-radius:99px;background:var(--ink);color:#fff;display:grid;place-items:center}
+.cday.closed{background:var(--redbg)}
+.cday.sun .dn span{color:var(--red)}
+.cday.empty{background:transparent;cursor:default}
+.ev{font-size:10.5px;font-weight:600;border-radius:7px;padding:3px 6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;gap:5px}
+.ev::before{content:"";width:6px;height:6px;border-radius:9px;flex:none}
+.ev.hol{background:#fff;color:var(--red)}.ev.hol::before{background:var(--red)}
+.ev.fes{background:var(--lime)}.ev.fes::before{background:var(--ink)}
+.ev.pe{background:var(--ink);color:#fff}.ev.pe::before{background:var(--lime)}
+.ev.lv{background:#fff;color:#7a4a00}.ev.lv::before{background:#9b5f1d}
+.legend{display:flex;gap:14px;font-size:12px;color:var(--mut)}
+.legend span{display:flex;align-items:center;gap:6px}
+.legend i{width:8px;height:8px;border-radius:9px}
+.upc{display:flex;gap:12px;align-items:center;padding:9px 0}
+.upc .d{width:40px;height:44px;border-radius:12px;display:grid;place-items:center;text-align:center;line-height:1;font-weight:700;font-size:15px;flex:none}
+.upc .d small{display:block;font-size:9px;font-weight:600;margin-top:3px}
+.upc b{font-size:14px;font-weight:600;display:block}
+.upc span{font-size:12px;color:var(--mut)}
+
+/* fab */
+.fab{position:absolute;left:1422px;top:804px;width:152px;height:72px;border-radius:99px;background:var(--lime);display:flex;align-items:center;z-index:40;box-shadow:0 18px 40px -16px rgba(0,0,0,.35)}
+.fab .todo{width:76px;height:72px;display:grid;place-items:center;position:relative;border-radius:99px 0 0 99px}
+.fab .todo svg{width:27px;height:27px;stroke-width:2.6}
+.fab .todo .b{position:absolute;left:42px;top:15px;width:19px;height:19px;border-radius:99px;background:var(--ink);color:var(--lime);font-size:11.5px;font-weight:700;display:grid;place-items:center}
+.fab .chat{width:54px;height:54px;border-radius:99px;background:var(--ink);color:#fff;display:grid;place-items:center;position:relative;margin-left:2px;transition:transform .45s var(--snap)}
+.fab .chat:hover{transform:scale(1.06)}
+.fab .chat svg{width:25px;height:25px;stroke-width:2}
+.fab .chat .b{position:absolute;right:-2px;top:-2px;width:19px;height:19px;border-radius:99px;background:#FD0000;color:var(--lime);font-size:11.5px;font-weight:700;display:grid;place-items:center}
+.fab .todo:active,.fab .chat:active{transform:scale(.92)}
+
+/* popovers */
+.pop{position:absolute;left:1182px;width:392px;background:#fff;border-radius:26px;z-index:39;box-shadow:0 30px 70px -20px rgba(0,0,0,.35);transform-origin:85% 105%;opacity:0;transform:translateY(18px) scale(.92);pointer-events:none;transition:opacity .3s var(--out),transform .6s var(--spring);display:flex;flex-direction:column}
+.pop.on{opacity:1;transform:none;pointer-events:auto}
+.pop .ph{display:flex;align-items:center;gap:10px;padding:20px 20px 10px}
+.pop .ph b{font-size:19px;font-weight:700;letter-spacing:-.02em}
+.xb{width:34px;height:34px;border-radius:99px;background:var(--soft2);display:grid;place-items:center;margin-left:auto;transition:all .35s var(--out)}
+.xb:hover{background:var(--ink);color:#fff;transform:rotate(90deg)}
+.xb svg{width:16px;height:16px;stroke-width:2}
+.msgs{flex:1;overflow-y:auto;padding:4px 20px 10px;scrollbar-width:none}
+.msg{display:flex;gap:10px;margin-top:14px}
+.msg .av{width:32px;height:32px;border-radius:99px;font-size:11.5px}
+.msg .who{font-size:13px;font-weight:600}.msg .who span{font-weight:400;color:var(--mut)}
+.msg .bb{background:var(--soft);border-radius:4px 16px 16px 16px;padding:10px 13px;font-size:14px;line-height:1.4;margin-top:5px}
+.msg.me .bb{background:var(--lime)}
+.msg .tagx{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;margin-top:7px}
+.msg .tagx i{width:7px;height:7px;border-radius:9px;background:var(--red)}
+.compose{display:flex;align-items:center;gap:8px;margin:8px 16px 16px;background:var(--soft);border-radius:99px;padding:4px 4px 4px 18px}
+.compose input{flex:1;font-size:14px;height:40px}
+.compose button{width:40px;height:40px;border-radius:99px;background:var(--ink);color:var(--lime);display:grid;place-items:center;transition:transform .4s var(--snap)}
+.compose button:active{transform:scale(.88)}
+.todo-i{display:flex;align-items:flex-start;gap:12px;padding:11px 20px;cursor:pointer;transition:background .25s}
+.todo-i:hover{background:var(--soft)}
+.cb{width:22px;height:22px;border-radius:99px;box-shadow:inset 0 0 0 2px #CFCFC5;display:grid;place-items:center;flex:none;margin-top:1px;color:var(--ink);transition:all .45s var(--snap)}
+.cb svg{width:12px;height:12px;stroke-width:3;opacity:0;transform:scale(.4);transition:all .45s var(--snap)}
+.todo-i.done .cb{background:var(--lime);box-shadow:none}.todo-i.done .cb svg{opacity:1;transform:none}
+.todo-i b{font-size:14px;font-weight:600;display:block;transition:color .3s}
+.todo-i.done b{color:var(--mut2);text-decoration:line-through}
+.todo-i small{font-size:12px;color:var(--mut)}
+.todo-i .when{margin-left:auto}
+
+/* modals */
+.scrim{position:absolute;inset:0;background:rgba(21,21,15,.5);opacity:0;pointer-events:none;z-index:60;transition:opacity .4s var(--out)}
+.scrim.on{opacity:1;pointer-events:auto}
+.modal{position:absolute;background:#fff;border-radius:28px;padding:30px;z-index:61;opacity:0;transform:translateY(30px) scale(.975);pointer-events:none;transition:opacity .3s var(--out),transform .65s var(--spring);box-shadow:0 40px 90px -30px rgba(0,0,0,.45)}
+.modal.on{opacity:1;transform:none;pointer-events:auto}
+.modal.out{opacity:0;transform:translateY(14px) scale(.985);transition-duration:.25s,.4s}
+.mh{display:flex;align-items:flex-start;gap:16px}
+.mh h2{font-size:25px;font-weight:700;letter-spacing:-.03em}
+.mh p{font-size:14px;color:var(--mut);margin-top:6px;line-height:1.45}
+.mh .xb{width:38px;height:38px;flex:none}
+.mh .mi{width:54px;height:54px;border-radius:16px;background:var(--lime);display:grid;place-items:center;flex:none}
+.mh .mi svg{width:24px;height:24px}
+.mgrid{display:grid;gap:12px;margin-top:20px}
+.mfoot{display:flex;align-items:center;gap:10px;margin-top:22px;font-size:13px;color:var(--mut)}
+.mfoot .btn:first-of-type{margin-left:auto}
+.mfoot .btn{height:46px}
+.stepc{display:flex;align-items:center;gap:8px}
+.circ{width:36px;height:36px;border-radius:99px;display:grid;place-items:center;background:var(--soft2);transition:transform .3s var(--snap)}
+.circ.l{background:var(--lime)}
+.circ:active{transform:scale(.86)}
+.circ svg{width:15px;height:15px;stroke-width:2.2}
+.val{min-width:92px;height:46px;border-radius:14px;background:#fff;display:grid;place-items:center;font-size:20px;font-weight:700;letter-spacing:-.02em;box-shadow:inset 0 0 0 1.5px var(--line)}
+.reading{display:flex;align-items:center;gap:14px;border-radius:16px;padding:14px 16px;transition:background .45s var(--out)}
+.reading b{font-size:15px;display:block}.reading small{font-size:12px;color:var(--mut)}
+.reading .pill{margin-left:auto;background:#fff}
+.reading.bad{background:var(--redbg)}.reading.ok{background:var(--soft)}
+.reading.bad .pill{color:var(--red)}
+.alert{display:flex;align-items:center;gap:10px;border-radius:14px;padding:13px 16px;font-size:14px;font-weight:500;background:var(--redbg);color:var(--red);transition:all .45s var(--out)}
+.alert.ok{background:var(--grnbg);color:var(--grn)}
+.opt{border-radius:20px;padding:20px;text-align:left;box-shadow:inset 0 0 0 1.5px var(--line);transition:all .45s var(--out);display:block;width:100%}
+.opt:hover{transform:translateY(-3px);box-shadow:inset 0 0 0 1.5px var(--line),0 18px 30px -20px rgba(0,0,0,.3)}
+.opt.dark{background:var(--ink);color:#fff;box-shadow:none}
+.opt .ibox{margin-bottom:22px}
+.opt.dark .ibox{background:var(--lime);color:var(--ink)}
+.opt b{font-size:19px;font-weight:700;letter-spacing:-.02em;display:block}
+.opt p{font-size:14px;color:var(--mut);margin-top:6px;line-height:1.45}
+.opt.dark p{color:#C9C9BF}
+.togs{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.tg{height:46px;border-radius:14px;background:var(--soft);font-weight:600;font-size:14px;display:flex;align-items:center;justify-content:center;gap:8px;transition:all .4s var(--out)}
+.tg.on{background:var(--lime)}
+.tg:active{transform:scale(.95)}
+.kind{border-radius:16px;padding:12px 14px;background:var(--soft);text-align:left;transition:all .4s var(--out)}
+.kind b{font-size:15px;display:block}.kind small{font-size:12px;color:var(--mut)}
+.kind.on{background:var(--lime);box-shadow:inset 0 0 0 2px var(--ink)}
+.bayo{border-radius:14px;padding:11px 13px;background:#fff;box-shadow:inset 0 0 0 1.5px var(--line);text-align:left;transition:all .4s var(--out)}
+.bayo b{font-size:15px;display:block}.bayo small{font-size:12px;color:var(--mut)}
+.bayo.on{background:var(--lime);box-shadow:inset 0 0 0 2px var(--ink)}
+.bayo.full{background:var(--soft);box-shadow:none;color:var(--mut2);cursor:not-allowed}
+.lotc{display:flex;align-items:center;gap:12px;padding:11px 14px;border-radius:14px;background:#fff;cursor:pointer;transition:background .3s}
+.lotc:hover{background:#FBFBF7}
+.lotc>span:last-child{margin-left:auto;font-size:13px;color:var(--mut)}
+.chk{width:22px;height:22px;border-radius:7px;box-shadow:inset 0 0 0 2px #CFCFC5;display:grid;place-items:center;transition:all .4s var(--snap)}
+.chk svg{width:12px;height:12px;stroke-width:3;opacity:0;transform:scale(.4);transition:all .4s var(--snap)}
+.lotc.on .chk{background:var(--lime);box-shadow:none}.lotc.on .chk svg{opacity:1;transform:none}
+.passk{display:flex;justify-content:space-between;font-size:13.5px;padding:9px 0;border-top:1px solid var(--line)}
+.passk span{color:var(--mut)}.passk b{font-weight:600}
+.sig{border-radius:18px;background:#F7FBDD;box-shadow:inset 0 0 0 2px var(--lime2);position:relative;height:200px;cursor:crosshair;touch-action:none}
+.sig canvas{position:absolute;inset:0;width:100%;height:100%}
+.sig .sl{position:absolute;bottom:16px;left:0;right:0;text-align:center;font-size:13px;color:var(--ink2);pointer-events:none}
+.sig .hint{position:absolute;inset:0;display:grid;place-items:center;font-size:14px;color:var(--mut);pointer-events:none;transition:opacity .3s}
+.tline{position:relative;padding-left:22px}
+.tline::before{content:"";position:absolute;left:5px;top:6px;bottom:6px;width:2px;background:#3A3A32}
+.tl{position:relative;padding:0 0 14px}
+.tl::before{content:"";position:absolute;left:-21px;top:5px;width:10px;height:10px;border-radius:9px;background:var(--lime)}
+.tl.red::before{background:#E06A55}
+.tl b{font-size:14px;display:block;color:#fff}
+.tl small{font-size:12px;color:#A9A99F}
+.tl .tm{position:absolute;right:0;top:0;font-size:12px;color:#A9A99F}
+.tl .chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:7px}
+.tl .chips span{font-size:11px;background:rgba(255,255,255,.08);color:#D5D5CC;border-radius:7px;padding:3px 7px}
+.tl .chips span b{display:inline;font-size:11px;color:#fff}
+.side-l .it{background:#fff;border-radius:14px;padding:11px 13px;margin-top:8px}
+.side-l .it b{font-size:13.5px;display:block}.side-l .it small{font-size:12px;color:var(--mut);display:block;margin-top:2px}.side-l .it em{font-style:normal;font-size:11px;color:var(--mut2)}
+.knob{width:46px;height:28px}
+
+/* toast */
+.toast{position:absolute;top:22px;left:936px;z-index:80;background:#0A0A07;color:#fff;border-radius:28px;display:flex;align-items:center;gap:12px;padding:12px 22px 12px 12px;font-size:15px;font-weight:500;white-space:nowrap;transform:translate(-50%,-160%);opacity:0;pointer-events:none;box-shadow:0 18px 40px -10px rgba(0,0,0,.35)}
+.toast .tk{width:32px;height:32px;border-radius:99px;background:var(--lime);color:var(--ink);display:grid;place-items:center}
+.toast .tk svg{width:16px;height:16px;stroke-width:2.8}
+
+/* splash */
+.splash{position:absolute;inset:0;background:#000;z-index:100;display:grid;place-items:center;cursor:pointer}
+.splash svg .d{transform-box:fill-box;transform-origin:center;animation:popIn .6s var(--snap) var(--dl) backwards}
+.splash svg .lf{transform-box:fill-box;transform-origin:0 100%;animation:leaf .9s var(--snap) var(--dl) backwards}
+.splash svg .wm{animation:wm 1s var(--out) .5s backwards}
+@keyframes popIn{from{opacity:0;transform:scale(.3)}}
+@keyframes leaf{from{opacity:0;transform:scale(0) rotate(-35deg)}}
+@keyframes wm{from{opacity:0;transform:translateY(26px);filter:blur(8px)}}
+</style>
+</head>
+<body>
+<div class="stage"><div id="app">
+
+  <!-- ================= SIDEBAR ================= -->
+  <aside class="side">
+    <div class="logo"><svg width="30" height="34" viewBox="0 0 30 34"><g fill="#15150F"><circle cx="3" cy="6" r="2"/><circle cx="3" cy="17" r="2"/><circle cx="3" cy="28" r="2"/><circle cx="12" cy="6" r="2.6"/><circle cx="12" cy="17" r="2.6"/><circle cx="12" cy="28" r="2.6"/><path d="M19 16c0-7 4-12 10-13.5C28 9.5 25 14.5 19 16z"/><path d="M19 31c0-7 4-12 10-13.5C28 24.5 25 29.5 19 31z"/></g></svg><b>Beejwise</b></div>
+    <div class="plantsel" id="plantSel"><div><small>Plant 1</small><b id="plantName">Karnal</b></div><span class="chv"><i data-i="chev-down"></i></span></div>
+    <div class="pmenu" id="pmenu">
+      <button class="on" data-plant="Karnal">Karnal <small>Haryana</small></button>
+      <button data-plant="Medchal">Medchal <small>Telangana</small></button>
+      <button data-plant="Jalna">Jalna <small>Maharashtra</small></button>
+      <button data-plant="Kurnool">Kurnool <small>Andhra Pradesh</small></button>
+    </div>
+    <nav class="nav" id="nav">
+      <span class="navpill" id="navpill"></span>
+      <button data-nav="home" class="act"><i data-i="home"></i>Home</button>
+      <button data-nav="sessions"><i data-i="truck"></i>Sessions<span class="bdg" id="bSess">6</span></button>
+      <button data-nav="quality"><i data-i="flask"></i>Quality<span class="bdg" id="bQual">5</span></button>
+      <button data-nav="storage"><i data-i="archive"></i>Storage</button>
+      <button data-nav="dispatch"><i data-i="send"></i>Dispatch<span class="bdg" id="bDisp">3</span></button>
+      <button data-nav="lots"><i data-i="layers"></i>Lots</button>
+      <button data-nav="connectors"><i data-i="plug"></i>Connectors</button>
+      <button data-nav="calendar"><i data-i="calendar"></i>Calendar</button>
+    </nav>
+    <button class="settings" data-toast="Settings are with the plant admin"><i data-i="sliders"></i>Settings</button>
+  </aside>
+
+  <!-- ================= TOPBAR ================= -->
+  <label class="search"><i data-i="search"></i><input id="searchIn" placeholder="Search lot, truck or grower"></label>
+  <div class="date"><b>Monday,</b> 12 November 2026</div>
+  <button class="avatar tap" data-toast="Signed in as Suresh Kumar, plant manager">SK</button>
+
+  <!-- ================= HOME ================= -->
+  <section class="view" id="v-home" data-search="Search lot, truck or grower">
+    <div class="rv" style="height:73px"><h1 class="h1">Good afternoon, Suresh</h1><p class="sub">Four plants, Kharif 2026, week 46.</p></div>
+    <div class="pcards rv" id="pcards"></div>
+    <div class="rv" style="display:grid;grid-template-columns:780px 1fr;gap:14px;margin-top:14px">
+      <div class="season">
+        <div class="row" style="justify-content:space-between"><h3>Season progress</h3><span class="pill" style="background:#fff;height:30px;font-size:13px">18,642 t of 26,000 t</span></div>
+        <p class="sub" style="font-size:13px;margin-top:2px">Tonnes processed since 1 June, added up week by week, against the season plan</p>
+        <svg width="740" height="130" viewBox="0 0 740 130" style="margin-top:6px" id="seasonSvg">
+          <g font-size="11" fill="#77776C" font-family="Outfit"><text x="0" y="14">26,000 t</text><text x="3" y="58">13,000 t</text><text x="30" y="100">0 t</text></g>
+          <g stroke="#E1E1D9"><line x1="62" y1="10" x2="736" y2="10"/><line x1="62" y1="54" x2="736" y2="54"/><line x1="62" y1="96" x2="736" y2="96"/></g>
+          <defs><linearGradient id="ag" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#D9EB4C" stop-opacity=".75"/><stop offset="1" stop-color="#E4F55F" stop-opacity=".25"/></linearGradient></defs>
+          <path id="sArea" d="M62 96 C150 88 230 72 330 62 S520 44 600 38 S690 33 736 31 L736 96 Z" fill="url(#ag)"/>
+          <path d="M62 96 L736 14" stroke="#9A9A90" stroke-width="1.5" stroke-dasharray="5 5" fill="none"/>
+          <path id="sLine" d="M62 96 C150 88 230 72 330 62 S520 44 600 38 S690 33 736 31" stroke="#15150F" stroke-width="2.4" fill="none"/>
+          <circle cx="736" cy="31" r="4.5" fill="#15150F" stroke="#fff" stroke-width="2"/>
+          <g font-size="11" fill="#77776C" font-family="Outfit"><text x="80" y="116">Jun</text><text x="212" y="116">Jul</text><text x="340" y="116">Aug</text><text x="475" y="116">Sep</text><text x="608" y="116">Oct</text><text x="720" y="116">Nov</text></g>
+        </svg>
+        <div class="row" style="background:#fff;border-radius:12px;height:30px;padding:0 12px;font-size:13px;gap:18px;position:absolute;left:20px;right:20px;bottom:14px">
+          <span class="row" style="gap:7px"><i style="width:14px;height:3px;background:var(--ink);border-radius:2px"></i>Processed, 72% of plan</span>
+          <span class="row" style="gap:7px"><i style="width:14px;height:3px;background:#9A9A90;border-radius:2px"></i>Plan</span>
+          <span style="margin-left:auto">This week <b>+1,284 t</b></span></div>
+      </div>
+      <div>
+        <div class="row" style="justify-content:space-between;margin:-1px 0 9px"><h3 class="cardh">How the plants are doing</h3><button style="font-size:13px;text-decoration:underline;color:var(--ink2)" data-toast="Recovery is bags out over bags in, averaged across plants">How we count these</button></div>
+        <div class="health">
+          <div class="hr" data-nav="sessions"><span class="ibox" style="background:var(--soft)"><i data-i="trend"></i></span><span><b>84.4%</b><small>Average recovery</small></span><em style="color:var(--grn)">+0.4 this week</em></div>
+          <div class="hr" data-nav="quality"><span class="ibox" style="background:var(--soft)"><i data-i="flask"></i></span><span><b>12 lots</b><small>Waiting on quality</small></span><em style="color:var(--red)">3 new today</em></div>
+          <div class="hr" data-nav="connectors"><span class="ibox" style="background:var(--soft)"><i data-i="shield"></i></span><span><b>91%</b><small>Ready for SATHI</small></span><em style="color:var(--amb)">148 need fields</em></div>
+        </div>
+      </div>
+    </div>
+    <div class="card rv" style="margin-top:14px;padding:18px 20px">
+      <div class="row"><h3 class="cardh">Needs you now</h3><span class="pill p-lime" style="margin-left:12px">3 of 7</span><button class="btn lime" style="margin-left:auto;height:40px;padding:0 6px 0 16px" data-nav="sessions">Review all <span class="bi" style="background:var(--ink);color:#fff;margin:0;width:28px;height:28px"><i data-i="arrow-ur"></i></span></button></div>
+      <div class="needs">
+        <button data-nav="sessions"><span class="ibox" style="background:var(--redbg);color:var(--red)"><i data-i="pause"></i></span><span><b>Line 3 stopped for 42 min</b><small>Karnal. Sieve change overdue.</small></span></button>
+        <button data-nav="quality"><span class="ibox" style="background:var(--ambbg);color:var(--amb)"><i data-i="warn"></i></span><span><b>Lot JL-26K-0219 germinated at 71%</b><small>Jalna. Held, 4 dispatches blocked.</small></span></button>
+        <button data-nav="connectors"><span class="ibox" style="background:var(--lime)"><i data-i="shield"></i></span><span><b>148 lots missing SATHI fields</b><small>Kurnool has 61 of them.</small></span></button>
+      </div>
+    </div>
+    <div class="card rv" style="margin-top:14px;padding:18px 20px 8px">
+      <div class="row" style="margin-bottom:14px"><h3 class="cardh">Plants this week</h3><div class="row" style="margin-left:auto;gap:6px" data-chips="crop"><button class="chip sm on tap">All crops</button><button class="chip sm tap" style="background:var(--soft)">Maize</button><button class="chip sm tap" style="background:var(--soft)">Paddy</button></div></div>
+      <table class="tbl"><thead><tr><th style="width:310px">Plant</th><th style="width:371px">Processed against plan</th><th style="width:157px">Recovery</th><th style="width:126px">Queue</th><th style="width:218px">Holds</th><th>Status</th></tr></thead><tbody id="plantRows"></tbody></table>
+    </div>
+  </section>
+
+  <!-- ================= SESSIONS ================= -->
+  <section class="view" id="v-sessions" data-search="Search session, truck or lot">
+    <div class="vhead rv"><div><h1 class="h1">Sessions</h1><p class="sub">Shift B, 14:00 to 22:00. Handover in 3 h 12 min.</p></div>
+      <div class="acts"><button class="btn white tap" data-open="m-stop"><i data-i="pause"></i>Log stoppage</button><button class="btn dark tap" data-open="m-new">New session<span class="bi"><i data-i="plus"></i></span></button></div></div>
+    <div class="rv" style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px">
+      <div class="stat"><span class="ibox"><i data-i="trend"></i></span><span><small>Processed this shift</small><b>96.4 t</b><span>of 124 t plan</span></span></div>
+      <div class="stat"><span class="ibox"><i data-i="clock"></i></span><span><small>Recovery this shift</small><b>81.9%</b><span>band 80 to 86%</span></span></div>
+      <div class="stat r"><span class="ibox"><i data-i="pause"></i></span><span><small>Downtime this shift</small><b id="dtMin">58 min</b><span>limit 30 min</span></span></div>
+    </div>
+    <div class="row rv" style="margin-top:22px;gap:8px" data-chips="sess">
+      <button class="chip on tap" data-f="active">Active <span class="n" id="nActive">2</span></button><button class="chip tap" data-f="todo">To be started <span class="n">3</span></button><button class="chip tap" data-f="done">Completed <span class="n">5</span></button>
+      <span style="margin-left:auto;font-size:13px;color:var(--mut)">Open a session to move it along</span></div>
+    <div id="sessList" class="rv"></div>
+  </section>
+
+  <!-- ================= QUALITY ================= -->
+  <section class="view" id="v-quality" data-search="Search lot, sample or test">
+    <div class="vhead rv"><div><h1 class="h1">Quality</h1><p class="sub" id="qSub">Five lots are waiting on a call from you.</p></div>
+      <div class="acts"><button class="btn white tap" data-open="m-lab"><i data-i="plus"></i>Log a lab result</button><button class="btn dark tap" data-open="m-sample">Draw a sample<span class="bi"><i data-i="flask"></i></span></button></div></div>
+    <div class="stats rv">
+      <div class="stat"><span class="ibox"><i data-i="flask"></i></span><span><small>Samples in the lab</small><b>14</b><span>across 4 plants</span></span></div>
+      <div class="stat"><span class="ibox"><i data-i="clock"></i></span><span><small>Waiting on a result</small><b>6</b><span>oldest 2 days</span></span></div>
+      <div class="stat r"><span class="ibox"><i data-i="shield"></i></span><span><small>Lots on hold</small><b id="qHold">5</b><span>1,980 bags</span></span></div>
+      <div class="stat g"><span class="ibox"><i data-i="check"></i></span><span><small>Released today</small><b id="qRel">9</b><span>all within band</span></span></div>
+    </div>
+    <div class="rv" style="display:grid;grid-template-columns:800px 1fr;gap:14px;margin-top:16px">
+      <div class="card" style="padding:18px 20px 20px">
+        <div class="row"><h3 class="cardh">Needs a decision</h3><span class="pill p-red" style="margin-left:12px" id="qOn">4 on hold</span><span style="margin-left:auto;font-size:13px;color:var(--mut)">Release moves the lot on. Reject sends it back for reprocessing.</span></div>
+        <div id="decisions"></div>
+      </div>
+      <div>
+        <div class="chart"><h3 class="cardh" style="font-size:17px">Germination against the standard</h3><p class="sub" style="font-size:13px;line-height:1.4">Average germination of every lot tested that week, against the 60% minimum the Seed Act sets for certified maize.</p>
+          <div style="position:absolute;left:20px;top:116px;bottom:68px;width:36px;font-size:11px;color:var(--mut);display:flex;flex-direction:column;justify-content:space-between"><span>100%</span><span>75%</span><span>50%</span></div>
+          <div style="position:absolute;left:62px;right:22px;bottom:108px;border-top:2px dashed #C98378;z-index:2"></div>
+          <div class="bars" id="qBars"></div>
+          <div style="position:absolute;left:62px;right:22px;bottom:48px;display:flex;gap:12px;font-size:10px;color:var(--mut);text-align:center"><span style="flex:1">W39</span><span style="flex:1">W40</span><span style="flex:1">W41</span><span style="flex:1">W42</span><span style="flex:1">W43</span><span style="flex:1">W44</span><span style="flex:1">W45</span><span style="flex:1">W46</span></div>
+          <div class="row" style="position:absolute;left:20px;bottom:18px;gap:18px;font-size:12px"><span class="row" style="gap:6px"><i style="width:10px;height:10px;border-radius:3px;background:var(--ink)"></i>Weekly average</span><span class="row" style="gap:6px"><i style="width:14px;border-top:2px dashed #C98378"></i>Legal minimum, 60%</span></div>
+        </div>
+        <div class="std"><h3 class="cardh" style="font-size:17px;margin-bottom:10px">What the standard asks for</h3>
+          <div class="r"><span>Germination</span><span>60% min</span><b style="color:var(--grn)">87%</b></div>
+          <div class="r"><span>Genetic purity</span><span>98% min</span><b style="color:var(--grn)">98.8%</b></div>
+          <div class="r"><span>Moisture</span><span>12% max</span><b style="color:var(--grn)">11.0%</b></div>
+          <div class="r"><span>Inert matter</span><span>2% max</span><b style="color:var(--red)">2.3%</b></div>
+          <p style="font-size:12px;color:var(--mut);margin-top:6px">Certified maize, Seed Act 1966 and Seeds Rules 1968.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= STORAGE ================= -->
+  <section class="view" id="v-storage" data-search="Search lot, bay or crop">
+    <div class="vhead rv"><div><h1 class="h1">Storage</h1><p class="sub">18,420 bags held at Karnal. 22% of the floor is free.</p></div>
+      <div class="acts"><button class="btn white tap" data-toast="Stock report downloaded as PDF"><i data-i="download"></i>Stock report</button><button class="btn dark tap" data-open="m-record">Record a stored lot<span class="bi"><i data-i="plus"></i></span></button></div></div>
+    <div class="stats rv">
+      <div class="stat"><span class="ibox"><i data-i="archive"></i></span><span><small>Bags in storage</small><b>18,420</b><span>across 8 bays</span></span></div>
+      <div class="stat a"><span class="ibox"><i data-i="layers"></i></span><span><small>Space left</small><b>22%</b><span>5,200 bags</span></span></div>
+      <div class="stat"><span class="ibox"><i data-i="clock"></i></span><span><small>Oldest lot</small><b>41 days</b><span>KR-26K-0188</span></span></div>
+      <div class="stat r"><span class="ibox"><i data-i="shield"></i></span><span><small>Held for quality</small><b>3 lots</b><span>1,201 bags</span></span></div>
+    </div>
+    <div class="notice rv"><i data-i="lock"></i>Only the plant manager can record a lot into a bay, move it, or send it out. Everyone else sees this page read only.<span class="pill">You are the plant manager</span></div>
+    <div class="card rv" style="margin-top:14px;padding:18px 20px">
+      <div class="row"><h3 class="cardh" id="whTitle">Karnal warehouse, 8 bays</h3><span style="margin-left:auto;font-size:13px;color:var(--mut)" id="bayHint">Tap a bay to see what is in it</span></div>
+      <div class="baystrip" id="bayStrip"></div>
+    </div>
+    <div class="card rv" style="margin-top:14px;padding:18px 20px 8px">
+      <div class="row" style="margin-bottom:14px"><h3 class="cardh">Every lot in storage</h3><span class="pill p-soft" style="margin-left:10px" id="lotCount">7 lots</span>
+        <div class="row" style="margin-left:auto;gap:6px" data-chips="stor"><button class="chip sm on tap" data-f="all">All lots</button><button class="chip sm tap" data-f="ready" style="background:var(--soft)">Ready to dispatch</button><button class="chip sm tap" data-f="hold" style="background:var(--soft)">On hold</button></div></div>
+      <table class="tbl"><thead><tr><th style="width:476px">Lot and crop</th><th style="width:102px">Bags</th><th style="width:92px">Bay</th><th style="width:162px">Went in</th><th style="width:112px">Held</th><th>Release</th><th></th></tr></thead><tbody id="storRows"></tbody></table>
+    </div>
+  </section>
+
+  <!-- ================= DISPATCH ================= -->
+  <section class="view" id="v-dispatch" data-search="Search vehicle, driver or lot">
+    <div class="vhead rv"><div><h1 class="h1">Dispatch</h1><p class="sub">Seven loads today. Two gate passes are waiting on your signature.</p></div>
+      <div class="acts"><button class="btn white tap" data-toast="Gate pass log opened for November"><i data-i="doc"></i>Gate pass log</button><button class="btn dark tap" data-open="m-dispatch">New dispatch<span class="bi"><i data-i="plus"></i></span></button></div></div>
+    <div class="stats rv">
+      <div class="stat"><span class="ibox"><i data-i="truck"></i></span><span><small>Loads today</small><b>7</b><span>3 still at the gate</span></span></div>
+      <div class="stat"><span class="ibox"><i data-i="archive"></i></span><span><small>Bags out today</small><b>2,940</b><span>of 3,400 planned</span></span></div>
+      <div class="stat a"><span class="ibox"><i data-i="pen"></i></span><span><small>Gate passes to sign</small><b id="dSign">2</b><span>needs you</span></span></div>
+      <div class="stat g"><span class="ibox"><i data-i="check"></i></span><span><small>Left the plant</small><b id="dLeft">4</b><span>all logged to SATHI</span></span></div>
+    </div>
+    <div class="notice rv"><i data-i="lock"></i>Only the plant manager creates a dispatch, signs the gate pass, and marks a vehicle out. The floor team can see it but not change it.<span class="pill">You are the plant manager</span></div>
+    <div class="rv" style="display:grid;grid-template-columns:794px 1fr;gap:14px;margin-top:14px">
+      <div class="card" style="padding:18px 20px 20px">
+        <div class="row"><h3 class="cardh">Loads today</h3><div class="row" style="margin-left:auto;gap:6px" data-chips="loads"><button class="chip sm on tap" data-f="all">All <span class="n">4</span></button><button class="chip sm tap" data-f="loading" style="background:var(--soft)">Loading <span class="n">1</span></button><button class="chip sm tap" data-f="sign" style="background:var(--soft)">To sign <span class="n">1</span></button><button class="chip sm tap" data-f="gone" style="background:var(--soft)">Gone <span class="n">1</span></button></div></div>
+        <div id="loads"></div>
+      </div>
+      <div>
+        <div class="wait"><div class="row" style="margin-bottom:8px"><h3 class="cardh" style="font-size:17px">Waiting to load</h3><span style="margin-left:auto;font-size:12px;color:var(--mut)">Released lots only</span></div><div id="waitList"></div></div>
+        <div class="wait" style="margin-top:14px"><h3 class="cardh" style="font-size:17px">Out of the gate this week</h3>
+          <div class="wbars" id="wbars"></div>
+          <div class="row" style="justify-content:space-between;font-size:13px;color:var(--ink2);margin-top:10px"><span>14 vehicles, 6,180 bags</span><span>All gate passes signed</span></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= LOTS ================= -->
+  <section class="view" id="v-lots" data-search="Search lot, grower or truck">
+    <div class="vhead rv"><div><h1 class="h1">Lots</h1><p class="sub">Every lot at Karnal, newest first.</p></div>
+      <div class="acts"><button class="btn white tap" data-toast="20 lots exported to a spreadsheet"><i data-i="download"></i>Export the list</button><button class="btn dark tap" data-open="m-trace">Trace a lot<span class="bi"><i data-i="search"></i></span></button></div></div>
+    <div class="lfilter rv"><span style="font-size:13px;color:var(--mut);margin-right:4px">Group by</span>
+      <div class="seg" id="seg"><span class="k"></span><button class="on">Day</button><button>Month</button><button>Year</button></div>
+      <div class="row" style="gap:6px;margin-left:14px" data-chips="lcrop"><button class="chip sm on tap" data-f="all">Every crop</button><button class="chip sm tap" data-f="Maize" style="background:var(--soft)">Maize</button><button class="chip sm tap" data-f="Paddy" style="background:var(--soft)">Paddy</button><button class="chip sm tap" data-f="Cotton" style="background:var(--soft)">Cotton</button></div>
+      <span style="margin-left:auto;font-size:13px;color:var(--mut)" id="lotsN">20 lots in 14 days</span><span class="pill p-soft" style="height:32px;font-size:13px"><i data-i="calendar"></i>1 Aug 2026 to today</span></div>
+    <div class="card rv" style="padding:16px 20px 10px">
+      <table class="tbl"><thead><tr><th style="width:502px">Lot and crop</th><th style="width:107px">Bags</th><th style="width:122px">Recovery</th><th style="width:142px">Germination</th><th style="width:177px">Where it went</th><th style="width:160px">Finished</th><th></th></tr></thead><tbody id="lotRows"></tbody></table>
+    </div>
+  </section>
+
+  <!-- ================= CONNECTORS ================= -->
+  <section class="view" id="v-connectors" data-search="Search a record or a filing">
+    <div class="rv" style="height:73px"><h1 class="h1">Connectors</h1><p class="sub">One connection, kept honest. Beejwise files to SATHI as the work happens.</p></div>
+    <div class="sathi rv">
+      <div class="row" style="gap:16px"><span class="ibox" style="width:58px;height:58px;border-radius:16px;background:var(--ink);color:var(--lime)"><i data-i="shield"></i></span>
+        <div><div class="row" style="gap:10px"><b style="font-size:24px;font-weight:700;letter-spacing:-.02em">SATHI</b><span class="pill p-grn"><i style="width:7px;height:7px;border-radius:9px;background:var(--grn)"></i>Connected</span></div>
+        <p class="sub" style="margin-top:4px">Seed Authentication, Traceability and Holistic Inventory · Government of India. The only portal Beejwise talks to.</p></div>
+        <div style="margin-left:auto;text-align:right"><small style="font-size:13px;color:var(--mut)" id="lastSync">Last sync 11 minutes ago</small><br><button class="btn dark tap" style="margin-top:8px" id="syncNow">Sync now<span class="bi"><i data-i="refresh"></i></span></button></div></div>
+      <div class="stats" style="margin-top:18px">
+        <div class="stat w" style="background:var(--soft)"><span><small>Records filed today</small><b id="cFiled">214</b></span></div>
+        <div class="stat a"><span><small>Waiting to go</small><b id="cWait">6</b></span></div>
+        <div class="stat r"><span><small>Rejected by SATHI</small><b>1</b></span></div>
+        <div class="stat g"><span><small>Filed this season</small><b>18,904</b></span></div>
+      </div>
+    </div>
+    <div class="rv" style="display:grid;grid-template-columns:740px 1fr;gap:14px;margin-top:14px">
+      <div class="card" style="padding:18px 20px"><div class="row"><h3 class="cardh">What goes to SATHI</h3><span class="pill p-lime" style="margin-left:auto" id="onCount">5 of 6 on</span></div>
+        <p class="sub" style="font-size:13px;margin-bottom:8px">Beejwise files these for you as the work happens. Nothing is typed twice.</p><div id="goesList"></div></div>
+      <div>
+        <div class="card" style="padding:18px 20px"><h3 class="cardh" style="font-size:17px;margin-bottom:6px">What SATHI sends back</h3><div id="backList"></div></div>
+        <div class="card" style="padding:18px 20px;margin-top:14px"><div class="row"><h3 class="cardh" style="font-size:17px">Sync activity</h3><span style="margin-left:auto;font-size:12px;color:var(--mut)">Last 24 hours</span></div><div id="syncList" style="margin-top:6px"></div>
+          <div class="row" style="border-top:1px solid var(--line);padding-top:12px;margin-top:6px;font-size:12.5px;gap:6px"><span style="color:var(--mut)">Signed in as</span><b>HR-KNL-0041</b><button style="margin-left:auto;font-size:13px;text-decoration:underline" data-toast="Ask the plant admin to change the SATHI login">Change login</button></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= CALENDAR ================= -->
+  <section class="view" id="v-calendar" data-search="Search a day, a holiday or an event">
+    <div class="rv" style="height:73px"><h1 class="h1">Calendar</h1><p class="sub">Holidays, festivals and what the plant is closed for.</p></div>
+    <div class="rv" style="display:grid;grid-template-columns:900px 1fr;gap:14px">
+      <div class="cal">
+        <div class="row"><b style="font-size:21px;font-weight:700;letter-spacing:-.02em">November 2026</b><button class="xb" style="margin-left:14px;width:30px;height:30px" data-toast="October is archived"><i data-i="chev-left"></i></button><button class="xb" style="margin-left:6px;width:30px;height:30px" data-toast="December opens on 1 December"><i data-i="chev-right"></i></button>
+          <div class="legend" style="margin-left:auto"><span><i style="background:var(--red)"></i>Public holiday</span><span><i style="background:var(--lime2)"></i>Festival</span><span><i style="background:var(--ink)"></i>Plant event</span><span><i style="background:#9b5f1d"></i>Someone on leave</span></div></div>
+        <div class="cgrid" id="cgrid"></div>
+      </div>
+      <div>
+        <button class="card tap" data-open="m-event" style="width:100%;height:56px;display:flex;align-items:center;justify-content:center;gap:12px;background:var(--lime);font-weight:600;font-size:16px"><span style="width:30px;height:30px;border-radius:99px;background:var(--ink);color:var(--lime);display:grid;place-items:center"><i data-i="plus"></i></span>Add an event</button>
+        <div class="card" style="padding:18px 20px;margin-top:14px" id="dayCard"></div>
+        <div class="card" style="padding:16px 20px;margin-top:14px"><div class="row"><h3 class="cardh" style="font-size:17px">Coming up</h3><span style="margin-left:auto;font-size:12px;color:var(--mut)">Rest of November</span></div><div id="upList"></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= FAB + POPOVERS ================= -->
+  <div class="fab"><button class="todo" id="fabTodo"><i data-i="list"></i><span class="b" id="todoN">5</span></button><button class="chat" id="fabChat"><i data-i="chat"></i><span class="b" id="chatN">5</span></button></div>
+  <div class="pop" id="p-chat" style="top:170px;height:620px">
+    <div class="ph"><b>Plant chat</b><span class="pill p-lime">6 on shift</span><button class="xb" data-closepop><i data-i="x"></i></button></div>
+    <div class="msgs" id="msgs"></div>
+    <form class="compose" id="compose"><input id="msgIn" placeholder="Write a message" autocomplete="off"><button type="submit"><i data-i="send"></i></button></form>
+  </div>
+  <div class="pop" id="p-todo" style="top:249px;height:541px">
+    <div class="ph"><b>To-Dos</b><span class="pill p-lime" id="openN">5 open</span><button class="xb" data-closepop><i data-i="x"></i></button></div>
+    <p style="font-size:13px;color:var(--mut);padding:0 20px 8px">Carried over from shift A, plus anything the plant manager sent you today.</p>
+    <div id="todos" style="flex:1;overflow-y:auto;scrollbar-width:none"></div>
+    <div style="padding:10px 20px 18px"><button class="btn white tap" id="addTodo" style="width:100%;box-shadow:inset 0 0 0 1.5px var(--line)"><i data-i="plus"></i>Add todo</button></div>
+  </div>
+
+  <!-- ================= MODALS ================= -->
+  <div class="scrim" id="scrim"></div>
+
+  <div class="modal" id="m-new" style="left:440px;top:218px;width:720px">
+    <div class="mh"><div><h2>New session</h2><p>Weigh the truck in, read the moisture off the meter, and the lot number writes itself.</p></div><button class="xb" data-close><i data-i="x"></i></button></div>
+    <div class="mgrid" style="grid-template-columns:1fr 1fr 106px"><div><span class="flab">Truck number</span><input class="inp" value="HR 26 9031"></div><div><span class="flab">Grower</span><input class="inp" value="Jaspal Sidhu"></div><div><span class="flab">Weight, tonnes</span><input class="inp" value="24.0"></div></div>
+    <div class="mgrid" style="grid-template-columns:1fr 1fr"><div><span class="flab">Crop and variety</span><div class="inp" style="justify-content:space-between;cursor:pointer" id="cropPick"><span id="cropV">Bajra HHB-299</span><i data-i="chev-down"></i></div></div><div><span class="flab">Lot number</span><div class="inp s" style="justify-content:space-between">KR-26K-0409<span style="font-size:12px;color:var(--mut);font-weight:500">next in line</span></div></div></div>
+    <div class="row" style="background:var(--soft);border-radius:18px;padding:14px 16px;margin-top:16px;gap:14px"><span class="ibox" style="background:#fff"><i data-i="drop"></i></span><span><b style="font-size:15px">Moisture at the gate</b><small style="display:block;font-size:13px;color:var(--mut)" id="moBand">Inside the band, it can go straight to the gravity table.</small></span>
+      <div class="stepc" style="margin-left:auto"><button class="circ" id="moM"><i data-i="minus"></i></button><span class="val" id="mo">14.1%</span><button class="circ l" id="moP"><i data-i="plus"></i></button></div></div>
+    <div class="mfoot">The lot registers with SATHI the moment you start it.<button class="btn white" data-close style="box-shadow:inset 0 0 0 1.5px var(--line)">Cancel</button><button class="btn lime" id="startSession"><i data-i="play"></i>Log moisture and start</button></div>
+  </div>
+
+  <div class="modal" id="m-where" style="left:490px;top:250px;width:620px">
+    <div class="mh"><span class="mi"><i data-i="check"></i></span><div><h2>Where does this lot go?</h2><p>Lot KR-26K-0404 finished treatment and packaging. Pick where the bags are headed, so the lot shows up in the right place.</p></div><button class="xb" data-close><i data-i="x"></i></button></div>
+    <div class="mgrid" style="grid-template-columns:1fr 1fr;margin-top:24px">
+      <button class="opt" id="goStorage"><span class="ibox"><i data-i="archive"></i></span><b>Goes to storage</b><p>Bags move to a warehouse bay and wait. You will set the bay on the Storage page.</p></button>
+      <button class="opt dark" id="goDispatch"><span class="ibox"><i data-i="truck"></i></span><b>Goes to dispatch</b><p>Bags load onto a vehicle today. A draft dispatch opens on the Dispatch page.</p></button></div>
+    <p style="font-size:13px;color:var(--mut);margin-top:18px">A lot that is still on quality hold cannot be dispatched. It will go to storage and wait for release.</p>
+  </div>
+
+  <div class="modal" id="m-stop" style="left:500px;top:230px;width:600px">
+    <div class="mh"><span class="mi" style="background:var(--redbg);color:var(--red)"><i data-i="pause"></i></span><div><h2>Log a stoppage</h2><p>Every minute counts against today’s 30 minute limit.</p></div><button class="xb" data-close><i data-i="x"></i></button></div>
+    <div class="mgrid" style="grid-template-columns:1fr 1fr"><div><span class="flab">Which line</span><div class="inp">Line 3 · Drier 2</div></div><div><span class="flab">How long, minutes</span><div class="stepc"><button class="circ" id="stM"><i data-i="minus"></i></button><span class="val" id="stV" style="flex:1">41</span><button class="circ l" id="stP"><i data-i="plus"></i></button></div></div></div>
+    <span class="flab" style="margin-top:18px">What stopped it</span>
+    <div class="togs" data-single style="grid-template-columns:repeat(3,1fr)"><button class="tg on">Belt or bearing</button><button class="tg">Power cut</button><button class="tg">Seed too wet</button><button class="tg">No seed at hopper</button><button class="tg">Bags ran out</button><button class="tg">Shift change</button></div>
+    <div class="mfoot">Your plant manager sees this the moment you save.<button class="btn white" data-close style="box-shadow:inset 0 0 0 1.5px var(--line)">Cancel</button><button class="btn dark" id="saveStop">Save the stoppage</button></div>
+  </div>
+
+  <div class="modal" id="m-lab" style="left:430px;top:132px;width:740px">
+    <div class="mh"><div><h2>Log a lab result</h2><p>Type what the lab measured. Beejwise marks each one against the standard as you go.</p></div><button class="xb" data-close><i data-i="x"></i></button></div>
+    <div class="mgrid" style="grid-template-columns:repeat(3,1fr)"><div><span class="flab">Sample number</span><input class="inp" value="SM-26K-1182"></div><div><span class="flab">Belongs to lot</span><input class="inp" value="KR-26K-0377"></div><div><span class="flab">Tested on</span><input class="inp" value="2 Nov 2026"></div></div>
+    <span class="flab" style="margin-top:20px">The three readings</span>
+    <div style="display:grid;gap:10px" id="readings"></div>
+    <div class="alert" id="labAlert" style="margin-top:12px"><i data-i="warn"></i><span id="labAlertTx">One reading is outside the standard, so the lot goes on hold when you save.</span></div>
+    <div class="mfoot">Saved against the lab in charge and filed to SATHI on the next sync.<button class="btn white" data-close style="box-shadow:inset 0 0 0 1.5px var(--line)">Cancel</button><button class="btn lime" id="saveLab">Save the result</button></div>
+  </div>
+
+  <div class="modal" id="m-sample" style="left:450px;top:189px;width:700px">
+    <div class="mh"><div><h2>Draw a sample</h2><p>Raise the sample here, then the floor team pulls it and walks it to the lab.</p></div><button class="xb" data-close><i data-i="x"></i></button></div>
+    <div class="mgrid" style="grid-template-columns:1fr 1fr 1fr"><div><span class="flab">Which lot</span><input class="inp" value="KR-26K-0402, on cleaning"></div><div><span class="flab">Grams</span><input class="inp" value="1000"></div><div><span class="flab">Sample number</span><div class="inp s">SM-26K-1183</div></div></div>
+    <span class="flab" style="margin-top:20px">Which tests to run</span>
+    <div class="togs" id="testsT"><button class="tg on">Germination</button><button class="tg on">Purity</button><button class="tg on">Moisture</button><button class="tg">Vigour</button></div>
+    <div style="background:#F4F7DA;border-radius:18px;padding:16px 18px;margin-top:16px"><b style="font-size:13.5px">How the floor is told to draw it</b>
+      <div style="display:grid;gap:9px;margin-top:10px;font-size:13.5px">
+        <div class="row" style="gap:12px"><span class="pill p-lime" style="width:22px;padding:0;justify-content:center">1</span>Take a scoop from five different bags, not five from the top of one.</div>
+        <div class="row" style="gap:12px"><span class="pill p-lime" style="width:22px;padding:0;justify-content:center">2</span>Mix the scoops in the tray, then halve it down to the weight above.</div>
+        <div class="row" style="gap:12px"><span class="pill p-lime" style="width:22px;padding:0;justify-content:center">3</span>Tie the printed slip to the bag before walking it to the lab.</div></div></div>
+    <div class="mfoot">It lands on the floor companion as a job for whoever is on that line.<button class="btn white" data-close style="box-shadow:inset 0 0 0 1.5px var(--line)">Cancel</button><button class="btn lime" id="raiseSample">Raise the sample</button></div>
+  </div>
+
+  <div class="modal" id="m-record" style="left:470px;top:263px;width:660px">
+    <div class="mh"><div><h2>Record a stored lot</h2><p>Only the plant manager fills this. The lot shows up in the bay as soon as you save.</p></div><button class="xb" data-close><i data-i="x"></i></button></div>
+    <div class="mgrid" style="grid-template-columns:1fr 1fr 1fr"><div><span class="flab">Lot number</span><input class="inp" value="KR-26K-0394"></div><div><span class="flab">Bags</span><input class="inp" value="408"></div><div><span class="flab">Bay</span><div class="inp" style="justify-content:space-between">Bay 3<i data-i="chev-down"></i></div></div></div>
+    <span class="flab" style="margin-top:20px">Note for the next shift</span><input class="inp" value="Stacked on pallets, keep clear of the east wall.">
+    <div class="mfoot">Saved against your name and employee ID for the audit trail.<button class="btn white" data-close style="box-shadow:inset 0 0 0 1.5px var(--line)">Cancel</button><button class="btn lime" data-confirm="KR-26K-0394 recorded in Bay 3">Save into bay</button></div>
+  </div>
+
+  <div class="modal" id="m-move" style="left:460px;top:180px;width:680px">
+    <div class="mh"><div><h2 id="mvTitle">Move KR-26K-0377</h2><p>Pick where the bags are going. Full bays cannot take it, so they are locked.</p></div><button class="xb" data-close><i data-i="x"></i></button></div>
+    <div class="row" style="background:var(--soft);border-radius:16px;padding:12px 18px;margin-top:20px;gap:24px"><span><small class="flab" style="margin:0">Now in</small><b style="font-size:18px" id="mvFrom">Bay 1</b></span><i data-i="arrow"></i><span><small class="flab" style="margin:0">Moving to</small><b style="font-size:18px" id="mvTo">Bay 7</b></span><span style="margin-left:auto;font-size:13px;color:var(--mut)" id="mvBags">512 bags, 2 pallet loads</span></div>
+    <span class="flab" style="margin-top:18px">Choose a bay</span>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px" id="bayOpts"></div>
+    <span class="flab" style="margin-top:18px">Why it is moving</span><input class="inp" value="Making room in Bay 1 for the Kharif maize coming in tomorrow">
+    <div class="mfoot">The move is written to the lot passport with your name on it.<button class="btn white" data-close style="box-shadow:inset 0 0 0 1.5px var(--line)">Cancel</button><button class="btn lime" id="doMove">Move to <span id="mvBtn">Bay 7</span></button></div>
+  </div>
+
+  <div class="modal" id="m-send" style="left:470px;top:217px;width:660px">
+    <div class="mh"><span class="mi"><i data-i="truck"></i></span><div><h2 id="sdTitle">Send KR-26K-0394 to dispatch</h2><p>The lot leaves the bay and joins Waiting to load on the Dispatch page. Put it on a load now, or let it wait there.</p></div><button class="xb" data-close><i data-i="x"></i></button></div>
+    <div class="mgrid" style="grid-template-columns:repeat(4,1fr)" id="sdStats"></div>
+    <div class="alert ok" style="margin-top:12px"><i data-i="check"></i>The lab released this lot on 2 November. Germination 85%, purity 98.9%, moisture 11.4%. Nothing is blocking it.</div>
+    <div class="mgrid" style="grid-template-columns:2fr 1fr"><div><span class="flab">Put it on a load</span><div class="inp" style="justify-content:space-between">HR 38 7712, loading for Hisar<i data-i="chev-down"></i></div></div><div><span class="flab">How many bags</span><input class="inp" value="408" id="sdBags"></div></div>
+    <div class="mfoot" id="sdFoot">Bay 3 frees up by 408 bags once this moves.<button class="btn white" data-close style="box-shadow:inset 0 0 0 1.5px var(--line)">Cancel</button><button class="btn dark" id="doSend">Send to dispatch</button></div>
+  </div>
+
+  <div class="modal" id="m-bay" style="left:406px;top:248px;width:788px">
+    <div class="mh"><span class="mi"><i data-i="archive"></i></span><div><h2>Add a bay</h2><p>A new place to stack bags. It shows up on the strip and on the floor app straight away.</p></div><button class="xb" data-close><i data-i="x"></i></button></div>
+    <div class="mgrid" style="grid-template-columns:1fr 1fr 180px"><div><span class="flab">What to call it</span><input class="inp" value="Bay 9" id="nbName"></div><div><span class="flab">Holds how many bags</span><input class="inp" value="3200" id="nbCap"></div><div><span class="flab">Where it is</span><div class="inp">Main warehouse</div></div></div>
+    <span class="flab" style="margin-top:18px">What kind of bay</span>
+    <div style="display:grid;grid-template-columns:repeat(3,195px);gap:10px" data-single><button class="kind on"><b>Ambient</b><small>Ordinary shed floor</small></button><button class="kind"><b>Cool store</b><small>Held under 20 degrees</small></button><button class="kind"><b>Fumigation</b><small>Sealed, for treated seed</small></button></div>
+    <div class="mfoot">Only the plant manager can add or retire a bay.<button class="btn white" data-close style="box-shadow:inset 0 0 0 1.5px var(--line)">Cancel</button><button class="btn lime" id="addBayBtn">Add the bay</button></div>
+  </div>
+
+  <div class="modal" id="m-dispatch" style="left:443px;top:198px;width:713px">
+    <div class="mh"><div><h2>New dispatch</h2><p>Pick the vehicle and the lots. A gate pass is drafted for your signature.</p></div><button class="xb" data-close><i data-i="x"></i></button></div>
+    <div class="mgrid" style="grid-template-columns:1fr 1fr 150px"><div><span class="flab">Vehicle number</span><input class="inp" value="HR 38 7712"></div><div><span class="flab">Driver</span><input class="inp" value="Ramesh Yadav"></div><div><span class="flab">Going to</span><input class="inp" value="Hisar depot"></div></div>
+    <div style="background:var(--soft);border-radius:18px;padding:14px 16px;margin-top:16px"><b style="font-size:13.5px">Lots on this load</b><span style="float:right;font-size:13px;color:var(--mut)" id="loadSum">905 bags</span>
+      <div style="display:grid;gap:8px;margin-top:12px" id="loadLots"></div>
+      <p style="font-size:12px;color:var(--mut);margin-top:10px">A lot still on quality hold cannot be added to a load.</p></div>
+    <div class="mfoot">The gate pass goes to SATHI the moment the vehicle leaves.<button class="btn white" data-close style="box-shadow:inset 0 0 0 1.5px var(--line)">Cancel</button><button class="btn lime" id="draftPass">Draft gate pass</button></div>
+  </div>
+
+  <div class="modal" id="m-pass" style="left:390px;top:184px;width:820px">
+    <div class="mh"><span class="mi" style="background:var(--ink);color:var(--lime)"><i data-i="doc"></i></span><div><h2>Sign the gate pass</h2><p>Check the load, then sign. Only the plant manager can, and the signature cannot be undone.</p></div><button class="xb" data-close><i data-i="x"></i></button></div>
+    <div style="display:grid;grid-template-columns:1fr 340px;gap:16px;margin-top:20px">
+      <div style="background:var(--soft);border-radius:18px;padding:14px 20px"><span class="flab">The pass</span><div id="passRows"></div></div>
+      <div><div class="sig" id="sig"><canvas id="sigC"></canvas><span class="hint" id="sigHint">Sign here with your mouse or finger</span><span class="sl" id="sigLine">Signed at 16:04, 2 November 2026</span></div>
+        <button class="btn white tap" id="sigClear" style="width:100%;margin-top:10px;box-shadow:inset 0 0 0 1.5px var(--line)">Clear and sign again</button>
+        <div class="row" style="background:var(--ambbg);color:var(--amb);border-radius:14px;padding:11px 14px;margin-top:10px;gap:10px;font-size:12px;line-height:1.4"><i data-i="warn"></i>Signing files the pass with SATHI and prints two copies, one for the driver and one for the gate.</div></div>
+    </div>
+    <div class="mfoot">Employee ID UXD-4471 is stamped on the pass alongside the signature.<button class="btn white" data-close style="box-shadow:inset 0 0 0 1.5px var(--line)">Not yet</button><button class="btn lime" id="issuePass"><i data-i="check"></i>Issue the gate pass</button></div>
+  </div>
+
+  <div class="modal" id="m-trace" style="left:200px;top:26px;width:1200px;height:848px;padding:26px 28px">
+    <div class="row" style="gap:16px"><div><h2 style="font-size:24px;font-weight:700;letter-spacing:-.03em">Trace a lot</h2><p style="font-size:13px;color:var(--mut);margin-top:4px">Lot number, bag tag or truck. You get the field, the plant and the buyer.</p></div>
+      <div class="inp s" style="width:620px;margin-left:auto;height:52px;border-radius:99px;gap:10px"><i data-i="search"></i><input id="traceIn" value="KR-26K-0398" style="flex:1;font-size:16px;font-weight:600"><span class="pill p-lime">1 match</span></div><button class="xb" data-close style="margin-left:6px;width:40px;height:40px"><i data-i="x"></i></button></div>
+    <div style="display:grid;grid-template-columns:2fr 1fr 1fr 1.2fr 1.4fr 1.2fr;gap:8px;margin-top:16px" id="traceStats"></div>
+    <div style="display:grid;grid-template-columns:300px 1fr 280px;gap:14px;margin-top:14px;height:590px">
+      <div class="side-l" style="background:var(--soft);border-radius:20px;padding:14px;overflow:auto;scrollbar-width:none"><b style="font-size:15px;padding-left:4px">Before the plant</b><div id="tBefore"></div></div>
+      <div style="background:#15150F;border-radius:20px;padding:16px 20px;overflow:auto;scrollbar-width:none"><div class="row" style="margin-bottom:16px"><b style="color:#fff;font-size:15px">Inside the plant</b><span style="margin-left:auto;font-size:12px;color:#A9A99F">4 h 40 min on the line · line 1</span></div><div class="tline" id="tInside"></div></div>
+      <div class="side-l" style="background:var(--soft);border-radius:20px;padding:14px;overflow:auto;scrollbar-width:none"><b style="font-size:15px;padding-left:4px">After the plant</b><div id="tAfter"></div>
+        <div style="background:#fff;border-radius:14px;padding:12px 13px;margin-top:12px;font-size:12.5px"><b style="font-size:13px">If you had to recall it</b>
+          <div class="row" style="justify-content:space-between;margin-top:8px"><span style="color:var(--mut)">Bags to pull back</span><b>512</b></div><div class="row" style="justify-content:space-between;margin-top:5px"><span style="color:var(--mut)">Places they sit</span><b>1</b></div><div class="row" style="justify-content:space-between;margin-top:5px"><span style="color:var(--mut)">Growers touched</span><b>1</b></div><div class="row" style="justify-content:space-between;margin-top:5px"><span style="color:var(--mut)">Time to trace</span><b>0.4 s</b></div></div></div>
+    </div>
+    <div class="mfoot" style="margin-top:14px">Traced in under a second because every step was logged as it happened, not typed up later.<button class="btn white" data-confirm="Trail exported as a PDF" style="box-shadow:inset 0 0 0 1.5px var(--line)">Export the trail</button><button class="btn lime" data-close>Open the lot</button></div>
+  </div>
+
+  <div class="modal" id="m-event" style="left:460px;top:171px;width:680px">
+    <div class="mh"><div><h2>Add an event</h2><p>Holidays, festivals and anything the plant closes or gathers for.</p></div><button class="xb" data-close><i data-i="x"></i></button></div>
+    <span class="flab" style="margin-top:20px">What is it called</span><input class="inp" value="Guru Nanak Jayanti" style="font-size:16px">
+    <span class="flab" style="margin-top:18px">What kind of day</span>
+    <div class="togs" data-single><button class="tg on"><i style="width:8px;height:8px;border-radius:9px;background:var(--red)"></i>Public holiday</button><button class="tg"><i style="width:8px;height:8px;border-radius:9px;background:var(--ink)"></i>Festival</button><button class="tg"><i style="width:8px;height:8px;border-radius:9px;background:var(--lime2)"></i>Plant event</button><button class="tg"><i style="width:8px;height:8px;border-radius:9px;background:#9b5f1d"></i>Someone on leave</button></div>
+    <div class="mgrid" style="grid-template-columns:1fr 1fr 1fr"><div><span class="flab">Date</span><div class="inp">8 November 2026</div></div><div><span class="flab">Time</span><div class="inp">All day</div></div><div><span class="flab">Repeats</span><div class="inp">Yearly</div></div></div>
+    <div class="row" style="background:var(--soft);border-radius:16px;padding:14px 16px;margin-top:16px;gap:14px"><span class="sw on" id="closedSw"></span><span><b style="font-size:14.5px">The plant is closed that day</b><small style="display:block;font-size:12.5px;color:var(--mut)">No intake, no sessions, and the floor app says so.</small></span></div>
+    <div class="mfoot">Everyone at Karnal sees it, on the dashboard and on the floor app.<button class="btn white" data-close style="box-shadow:inset 0 0 0 1.5px var(--line)">Cancel</button><button class="btn lime" data-confirm="Guru Nanak Jayanti added to 8 November">Add to November</button></div>
+  </div>
+
+  <div class="toast" id="toast"><span class="tk"><i data-i="check"></i></span><span id="toastTx">Saved</span></div>
+
+  <div class="splash" id="splash">
+    <svg width="440" height="110" viewBox="0 0 260 64"><g fill="#E4F55F">
+      <circle class="d" style="--dl:.05s" cx="6" cy="18" r="2.6"/><circle class="d" style="--dl:.1s" cx="6" cy="32" r="2.6"/><circle class="d" style="--dl:.15s" cx="6" cy="46" r="2.6"/>
+      <circle class="d" style="--dl:.12s" cx="19" cy="18" r="3.2"/><circle class="d" style="--dl:.17s" cx="19" cy="32" r="3.2"/><circle class="d" style="--dl:.22s" cx="19" cy="46" r="3.2"/>
+      <path class="lf" style="--dl:.28s" d="M29 31c0-9 5-15.5 13-17.5-1 9-5 15.5-13 17.5z"/><path class="lf" style="--dl:.38s" d="M29 50c0-9 5-15.5 13-17.5-1 9-5 15.5-13 17.5z"/>
+      <text class="wm" x="52" y="47" font-family="Outfit" font-weight="400" font-size="44" letter-spacing="-1.4">Beejwise</text></g></svg>
+  </div>
+</div></div>
+
+<script>
+(()=>{
+const $=(s,r=document)=>r.querySelector(s),$$=(s,r=document)=>[...r.querySelectorAll(s)];
+const E='cubic-bezier(.32,.72,0,1)',OUT='cubic-bezier(.22,1,.36,1)',SNAP='cubic-bezier(.34,1.56,.64,1)';
+const P={home:'<path d="M3.5 10.2 12 3.5l8.5 6.7V19a1.5 1.5 0 0 1-1.5 1.5h-4.2v-6h-5.6v6H5A1.5 1.5 0 0 1 3.5 19z"/>',
+truck:'<path d="M2.5 6.5h11v9.5h-11z"/><path d="M13.5 9.5h4l3 3.2v3.3h-7"/><circle cx="6.5" cy="17.5" r="1.8"/><circle cx="17" cy="17.5" r="1.8"/>',
+flask:'<path d="M9 3.5h6M10 3.5v6l-5.4 9A1.6 1.6 0 0 0 6 21h12a1.6 1.6 0 0 0 1.4-2.5l-5.4-9v-6"/><path d="M7.5 15.5h9"/>',
+archive:'<rect x="3" y="4" width="18" height="4.5" rx="1"/><path d="M4.5 8.5v10A1.5 1.5 0 0 0 6 20h12a1.5 1.5 0 0 0 1.5-1.5v-10M10 12.5h4"/>',
+send:'<path d="M3 7.5h10v9H3zM13 10.5h4.5l3 3v3H13"/><circle cx="6.5" cy="18" r="1.6"/><circle cx="16.5" cy="18" r="1.6"/><path d="M1 4.5h6"/>',
+layers:'<path d="M12 3.5 21 8l-9 4.5L3 8z"/><path d="M3 12.5l9 4.5 9-4.5M3 16.5l9 4.5 9-4.5"/>',
+plug:'<path d="M9 3v5M15 3v5M6.5 8h11v3a5.5 5.5 0 0 1-11 0zM12 16.5V21"/>',
+calendar:'<rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/>',
+sliders:'<path d="M4 7h9M17 7h3M4 17h3M11 17h9M15 5v4M9 15v4"/>',search:'<circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.3-4.3"/>',
+'chev-down':'<path d="M6 9l6 6 6-6"/>','chev-left':'<path d="M15 18l-6-6 6-6"/>','chev-right':'<path d="M9 18l6-6-6-6"/>',
+trend:'<path d="M3.5 17 9 11.5l4 4L20.5 8"/><path d="M15 8h5.5v5.5"/>',shield:'<path d="M12 3.5 19.5 6v6c0 4.5-3.2 7.6-7.5 9-4.3-1.4-7.5-4.5-7.5-9V6z"/><path d="m9 12 2 2 4-4"/>',
+pause:'<path d="M9.5 5.5v13M14.5 5.5v13"/>',warn:'<path d="M12 3.5 2.5 20h19z"/><path d="M12 10v4.5M12 17.3h.01"/>',
+'arrow-ur':'<path d="M7 17 17 7M8 7h9v9"/>',arrow:'<path d="M5 12h14M13 6l6 6-6 6"/>',plus:'<path d="M12 5v14M5 12h14"/>',minus:'<path d="M5 12h14"/>',
+check:'<path d="M20 6.5 9.5 17 4 11.5"/>',x:'<path d="M18 6 6 18M6 6l12 12"/>',clock:'<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>',
+lock:'<rect x="5.5" y="10.5" width="13" height="10" rx="2"/><path d="M8.5 10.5V7.5a3.5 3.5 0 0 1 7 0v3"/>',download:'<path d="M12 4v11M7 10.5l5 5 5-5M5 20h14"/>',
+doc:'<path d="M14 3.5H6.5a1 1 0 0 0-1 1v15a1 1 0 0 0 1 1h11a1 1 0 0 0 1-1V8z"/><path d="M14 3.5V8h4.5M9 13h6M9 16.5h4"/>',
+pen:'<path d="M4 20h4L19 9l-4-4L4 16z"/><path d="m13.5 6.5 4 4"/>',refresh:'<path d="M20 11a8 8 0 0 0-14.5-4.5L4 8M4 4v4h4M4 13a8 8 0 0 0 14.5 4.5L20 16M20 20v-4h-4"/>',
+drop:'<path d="M12 3.5s6 6.4 6 10.8a6 6 0 0 1-12 0C6 9.9 12 3.5 12 3.5z"/>',play:'<path d="M7.5 5.5v13l11-6.5z"/>',
+list:'<path d="M9 6.5h11M9 12h11M9 17.5h8"/><circle cx="4.5" cy="6.5" r="1" fill="currentColor"/><circle cx="4.5" cy="12" r="1" fill="currentColor"/><circle cx="4.5" cy="17.5" r="1" fill="currentColor"/>',
+chat:'<path d="M5 4.5h14a1.5 1.5 0 0 1 1.5 1.5v9.5A1.5 1.5 0 0 1 19 17H11l-4.5 3.5V17H5a1.5 1.5 0 0 1-1.5-1.5V6A1.5 1.5 0 0 1 5 4.5z"/>',
+leaf:'<path d="M5 19c0-8 6-13 14-14-1 8-6 14-14 14zM5 19l7-7"/>',user:'<circle cx="12" cy="8" r="4"/><path d="M4.5 20.5a7.5 7.5 0 0 1 15 0"/>',
+store:'<path d="M3.5 9 5 4.5h14L20.5 9M3.5 9v10.5h17V9M3.5 9h17M9 19.5v-5h6v5"/>'};
+const ico=n=>`<svg class="ic" viewBox="0 0 24 24">${P[n]||''}</svg>`;
+const paint=(r=document)=>$$('i[data-i]',r).forEach(i=>i.outerHTML=ico(i.dataset.i));
+
+/* ---------- scale ---------- */
+const app=$('#app');let scale=1;
+function fit(){scale=Math.min(innerWidth/1600,innerHeight/900);app.style.setProperty('--s',scale)}fit();addEventListener('resize',fit);
+
+/* ---------- motion helpers ---------- */
+function enter(el,base=60){$$('.rv',el).forEach((n,i)=>n.style.setProperty('--d',(base+i*55)+'ms'));el.classList.remove('in');void el.offsetWidth;el.classList.add('in')}
+function tick(el,v){el.textContent=v;el.animate([{transform:'translateY(40%)',opacity:0,filter:'blur(3px)'},{transform:'none',opacity:1,filter:'blur(0)'}],{duration:380,easing:OUT})}
+function shake(el){el.animate([{transform:'translateX(0)'},{transform:'translateX(-8px)'},{transform:'translateX(7px)'},{transform:'translateX(-4px)'},{transform:'translateX(2px)'},{transform:'none'}],{duration:440,easing:'cubic-bezier(.36,.07,.19,.97)'})}
+const wait=ms=>new Promise(r=>setTimeout(r,ms));
+let toastT;function toast(msg){const t=$('#toast');$('#toastTx').textContent=msg;clearTimeout(toastT);t.getAnimations().forEach(a=>a.cancel());
+  t.animate([{transform:'translate(-50%,-160%) scale(.9)',opacity:.3},{transform:'translate(-50%,0) scale(1)',opacity:1}],{duration:650,easing:SNAP,fill:'forwards'});
+  toastT=setTimeout(()=>t.animate([{transform:'translate(-50%,0)',opacity:1},{transform:'translate(-50%,-160%) scale(.92)',opacity:0}],{duration:480,easing:E,fill:'forwards'}),2600)}
+
+/* ---------- navigation ---------- */
+let cur='home',busy=false;
+function movePill(id){const b=$(`#nav [data-nav="${id}"]`);$$('#nav button').forEach(x=>x.classList.toggle('act',x===b));$('#navpill').style.transform=`translateY(${b.offsetTop}px)`}
+async function go(id){if(id===cur||busy)return;busy=true;closePop();const a=$('#v-'+cur),b=$('#v-'+id);
+  movePill(id);$('#searchIn').placeholder=b.dataset.search;b.scrollTop=0;b.classList.add('on');enter(b,80);
+  b.animate([{opacity:0,transform:'translateY(10px)'},{opacity:1,transform:'none'}],{duration:500,easing:OUT});
+  await a.animate([{opacity:1,transform:'none'},{opacity:0,transform:'translateY(-6px)'}],{duration:220,easing:OUT}).finished;
+  a.classList.remove('on');a.classList.remove('in');cur=id;busy=false;hooks[id]&&hooks[id]()}
+const hooks={home:()=>animRings(),quality:()=>{}};
+
+/* ---------- modal system ---------- */
+let openM=null;
+function openModal(id){const m=$('#'+id);closePop();if(openM&&openM!==m){const o=openM;o.classList.remove('on');o.classList.add('out');setTimeout(()=>o.classList.remove('out'),400)}
+  $('#scrim').classList.add('on');m.classList.remove('out');requestAnimationFrame(()=>m.classList.add('on'));openM=m;mHooks[id]&&mHooks[id]()}
+function closeModal(){if(!openM)return;const m=openM;m.classList.remove('on');m.classList.add('out');$('#scrim').classList.remove('on');setTimeout(()=>m.classList.remove('out'),420);openM=null}
+$('#scrim').addEventListener('click',closeModal);
+addEventListener('keydown',e=>{if(e.key==='Escape'){if(openM)closeModal();else closePop()}});
+const mHooks={};
+
+/* ---------- popovers ---------- */
+let openP=null;
+function togglePop(id){const p=$('#'+id);if(openP===p){closePop();return}closePop();p.classList.add('on');openP=p;if(id==='p-chat'){$('#chatN').style.transform='scale(0)';setTimeout(()=>$('#msgs').scrollTo({top:9e3,behavior:'smooth'}),200)}}
+function closePop(){if(openP){openP.classList.remove('on');openP=null}}
+$('#fabTodo').addEventListener('click',()=>togglePop('p-todo'));$('#fabChat').addEventListener('click',()=>togglePop('p-chat'));
+
+/* ---------- delegated clicks ---------- */
+document.addEventListener('click',e=>{
+  const t=e.target.closest('[data-nav],[data-open],[data-close],[data-closepop],[data-toast],[data-confirm]');
+  if(!e.target.closest('#plantSel,#pmenu'))closePlant();
+  if(!t)return;
+  if(t.dataset.nav){go(t.dataset.nav);return}
+  if(t.dataset.open){openModal(t.dataset.open);return}
+  if(t.hasAttribute('data-close')){closeModal();return}
+  if(t.hasAttribute('data-closepop')){closePop();return}
+  if(t.dataset.confirm){closeModal();setTimeout(()=>toast(t.dataset.confirm),180);return}
+  if(t.dataset.toast){toast(t.dataset.toast)}
+});
+// generic chip groups and single-select groups
+$$('[data-chips]').forEach(g=>g.addEventListener('click',e=>{const c=e.target.closest('.chip');if(!c)return;$$('.chip',g).forEach(x=>{x.classList.toggle('on',x===c);if(x.classList.contains('sm'))x.style.background=x===c?'':'var(--soft)'});g.dispatchEvent(new CustomEvent('pick',{detail:c.dataset.f||c.textContent.trim()}))}));
+$$('[data-single]').forEach(g=>g.addEventListener('click',e=>{const c=e.target.closest('button');if(!c)return;$$('button',g).forEach(x=>x.classList.toggle('on',x===c))}));
+
+/* ---------- plant picker ---------- */
+function closePlant(){$('#pmenu').classList.remove('on');$('#plantSel').classList.remove('open')}
+$('#plantSel').addEventListener('click',()=>{$('#pmenu').classList.toggle('on');$('#plantSel').classList.toggle('open')});
+$('#pmenu').addEventListener('click',e=>{const b=e.target.closest('[data-plant]');if(!b)return;$$('#pmenu button').forEach(x=>x.classList.toggle('on',x===b));tick($('#plantName'),b.dataset.plant);
+  $$('.pcard').forEach(c=>c.classList.toggle('on',c.dataset.p===b.dataset.plant));$('#whTitle').textContent=b.dataset.plant+' warehouse, 8 bays';closePlant();toast('Showing '+b.dataset.plant)});
+
+/* ================= HOME ================= */
+const PL=[['Karnal','Haryana','1,284',86],['Medchal','Telangana','1,106',74],['Jalna','Maharashtra','968',61],['Kurnool','Andhra Pradesh','742',47]];
+$('#pcards').innerHTML=PL.map(([n,r,t,p],i)=>`<div class="pcard${i?'':' on'}" data-p="${n}"><div class="t"><span><b>${n}</b><br><small>${r}</small></span><span style="font-weight:700;letter-spacing:1px">···</span></div>
+  <div class="num"><div class="ring"><svg width="46" height="46"><circle class="tr" cx="23" cy="23" r="19" stroke-width="5" fill="none"/><circle class="pg" cx="23" cy="23" r="19" stroke-width="5" fill="none" stroke-linecap="round" stroke-dasharray="119.4" stroke-dashoffset="119.4" data-p="${p}"/></svg><span>${p}%</span></div><span><strong>${t}</strong><small>tonnes this week</small></span></div></div>`).join('');
+$('#pcards').addEventListener('click',e=>{const c=e.target.closest('.pcard');if(!c)return;$$('.pcard').forEach(x=>x.classList.toggle('on',x===c));tick($('#plantName'),c.dataset.p);$$('#pmenu button').forEach(x=>x.classList.toggle('on',x.dataset.plant===c.dataset.p))});
+function animRings(){$$('.ring .pg').forEach(c=>{c.style.strokeDashoffset=119.4;requestAnimationFrame(()=>requestAnimationFrame(()=>c.style.strokeDashoffset=119.4*(1-c.dataset.p/100)))});
+  const l=$('#sLine'),len=l.getTotalLength();l.style.strokeDasharray=len;l.animate([{strokeDashoffset:len},{strokeDashoffset:0}],{duration:1600,easing:OUT});$('#sArea').animate([{opacity:0},{opacity:1}],{duration:1200,delay:300,easing:OUT,fill:'backwards'})}
+const PW=[['KR','Karnal','Haryana',3904,5200,'81.9%',14,5,'Bad'],['KU','Kurnool','Andhra Pradesh',2795,6000,'84.0%',5,4,'Okay'],['JL','Jalna','Maharashtra',3620,4800,'84.8%',9,1,'Okay'],['MD','Medchal','Telangana',4812,5600,'85.2%',6,2,'Good']];
+const pwCol={Bad:['p-red','#C9533F'],Okay:['p-amb','#D9A94A'],Good:['p-grn','#5E8F45']};
+$('#plantRows').innerHTML=PW.map(([a,n,r,d,p,rec,q,h,s])=>`<tr class="rowl"><td><div class="row" style="gap:12px"><span class="av${a==='KR'?' l':''}">${a}</span><span><b style="font-weight:600">${n}</b><small>${r}</small></span></div></td>
+  <td><b style="font-weight:600">${d.toLocaleString('en-IN')}</b> <span style="color:var(--mut)">/ ${p.toLocaleString('en-IN')} t</span><div class="bar"><i style="width:${Math.round(d/p*100)}%;background:${pwCol[s][1]}"></i></div></td><td>${rec}</td><td>${q}</td><td>${h}</td><td><span class="pill ${pwCol[s][0]}">${s}</span></td></tr>`).join('');
+
+/* ================= SESSIONS ================= */
+const STEPN=['Intake','Gravity table','Cleaning and grading','Treatment and packaging'];
+let sessions=[
+ {id:'KR-26K-0402',crop:'Maize',truck:'HR 32 4052',t:28,m:13.3,stage:2,open:false},
+ {id:'KR-26K-0404',crop:'Maize',truck:'HR 55 1188',t:32,m:17.8,stage:3,open:true}];
+const TODO=[['HR 26 9031','Paddy',24,'14.1%','Jaspal Sidhu','54 min'],['PB 11 7740','Maize',31,'18.6%','Harpreet Kaur','41 min'],['HR 44 2210','Cotton',19,'9.4%','Mohit Rana','12 min']];
+const DONE=[['KR-26K-0398','Maize KH-114',512,'86.1%','Went to dispatch'],['KR-26K-0394','Paddy RP-56',408,'85.0%','Went to storage'],['KR-26K-0390','Maize KH-114',497,'81.5%','Went to storage'],['KR-26K-0386','Cotton CS-202',281,'87.8%','Went to dispatch'],['KR-26K-0381','Maize KH-114',449,'83.1%','Went to storage']];
+let sessF='active';
+function sessHTML(s,i){const wet=s.m>14,last=s.stage>=3;
+  return `<div class="srow${s.open?' open':''}" data-i="${i}"><div class="hd"><span class="ibox${s.open?'" style="background:var(--lime)':''}"><i data-i="truck"></i></span><span><b>${s.crop}</b><small>${s.truck} · ${s.t} t · Lot ${s.id}</small></span>
+   <span class="rt"><span class="pill ${wet?'p-amb':'p-soft'}">${s.m}% moisture</span><small>${STEPN[s.stage]}</small></span><span class="exp"><i data-i="chev-right"></i></span></div>
+   <div class="body"><div><div class="stepper"><div class="ln"><i style="transform:scaleX(${s.stage/3})"></i></div><div class="steps">${STEPN.map((n,k)=>`<div class="${k<s.stage?'d':k===s.stage?'n':''}"><i>${ico('check')}</i>${n}</div>`).join('')}</div></div>
+   <div class="fields"><div class="field"><label>Truck number</label><input class="inp" value="${s.truck}"></div><div class="field"><label>Crop</label><input class="inp" value="${s.crop}"></div><div class="field"><label>Weight in tonnes</label><input class="inp" value="${s.t}"></div></div>
+   <div class="sfoot">${last?'Last step. Finishing asks you where the lot goes.':'Move it along when this stage is done on the floor.'}<button class="btn white tap" data-save style="box-shadow:inset 0 0 0 1.5px var(--line)">Save changes</button>
+   <button class="btn dark tap" data-adv>${last?'Finish session':'Move to '+STEPN[s.stage+1].toLowerCase()}<span class="bi"><i data-i="${last?'check':'arrow'}"></i></span></button></div></div></div></div>`}
+function renderSess(){const L=$('#sessList');
+  if(sessF==='active')L.innerHTML=sessions.length?sessions.map(sessHTML).join(''):`<div class="srow" style="padding:30px;text-align:center;color:var(--mut)">No sessions running. Start the next truck from New session.</div>`;
+  if(sessF==='todo')L.innerHTML=TODO.map(([t,c,w,m,g,a],i)=>`<div class="srow"><div class="hd" style="cursor:default"><span class="ibox"><i data-i="truck"></i></span><span><b>${c}</b><small>${t} · ${w} t · ${g}</small></span><span class="rt"><span class="pill ${parseFloat(m)>14?'p-amb':'p-soft'}">${m} moisture</span><small>Waiting ${a}</small></span><button class="btn dark tap" style="height:40px" data-open="m-new">Start<span class="bi"><i data-i="play"></i></span></button></div></div>`).join('');
+  if(sessF==='done')L.innerHTML=DONE.map(([id,c,b,r,w])=>`<div class="srow"><div class="hd" style="cursor:default"><span class="ibox" style="background:var(--grnbg);color:var(--grn)"><i data-i="check"></i></span><span><b>${c}</b><small>Lot ${id} · ${b} bags · recovery ${r}</small></span><span class="rt"><span class="pill ${w.includes('dispatch')?'p-lime':'p-soft'}">${w}</span></span></div></div>`).join('');
+  paint(L);$('#nActive').textContent=sessions.length;
+  $$('.srow',L).forEach(r=>r.animate([{opacity:0,transform:'translateY(12px)'},{opacity:1,transform:'none'}],{duration:500,delay:+r.dataset.i*60||0,easing:OUT,fill:'backwards'}))}
+renderSess();
+$('[data-chips="sess"]').addEventListener('pick',e=>{sessF=e.detail;renderSess()});
+$('#sessList').addEventListener('click',e=>{const row=e.target.closest('.srow[data-i]');if(!row)return;const s=sessions[row.dataset.i];
+  if(e.target.closest('.hd')){s.open=!s.open;row.classList.toggle('open',s.open);const ib=$('.hd .ibox',row);ib.style.background=s.open?'var(--lime)':'';return}
+  if(e.target.closest('[data-save]')){toast('Changes saved to '+s.id);return}
+  if(e.target.closest('[data-adv]')){if(s.stage>=3){state.finishing=s.id;openModal('m-where');return}
+    s.stage++;const st=$$('.steps>div',row);st.forEach((d,k)=>d.className=k<s.stage?'d':k===s.stage?'n':'');$('.ln i',row).style.transform=`scaleX(${s.stage/3})`;
+    $('.rt small',row).textContent=STEPN[s.stage];const last=s.stage>=3;const b=$('[data-adv]',row);b.innerHTML=(last?'Finish session':'Move to '+STEPN[s.stage+1].toLowerCase())+`<span class="bi">${ico(last?'check':'arrow')}</span>`;
+    $('.sfoot',row).firstChild.textContent=last?'Last step. Finishing asks you where the lot goes.':'Move it along when this stage is done on the floor.';toast(STEPN[s.stage-1]+' done for '+s.id)}});
+const state={finishing:'KR-26K-0404'};
+function finishSession(){sessions=sessions.filter(s=>s.id!==state.finishing);renderSess();const b=$('#bSess');b.textContent=Math.max(0,+b.textContent-1);b.animate([{transform:'scale(1.5)'},{transform:'none'}],{duration:500,easing:SNAP})}
+$('#goStorage').addEventListener('click',async()=>{finishSession();closeModal();await wait(260);await go('storage');await wait(280);openModal('m-record')});
+$('#goDispatch').addEventListener('click',async()=>{finishSession();closeModal();await wait(260);await go('dispatch');await wait(280);openModal('m-dispatch')});
+// new session modal
+let mo=14.1;const crops=['Bajra HHB-299','Paddy PR-126','Maize HQPM-1','Cotton RCH-659'];let ci=0;
+function moBand(){const lim=crops[ci].startsWith('Bajra')?12:crops[ci].startsWith('Cotton')?10:14,w=mo>lim;const b=$('#moBand');b.textContent=w?`Above the ${lim}% band. Send it to the drier first.`:'Inside the band, it can go straight to the gravity table.';b.style.color=w?'var(--amb)':''}
+$('#moM').addEventListener('click',()=>{mo=+(mo-.1).toFixed(1);tick($('#mo'),mo.toFixed(1)+'%');moBand()});
+$('#moP').addEventListener('click',()=>{mo=+(mo+.1).toFixed(1);tick($('#mo'),mo.toFixed(1)+'%');moBand()});
+$('#cropPick').addEventListener('click',()=>{ci=(ci+1)%crops.length;tick($('#cropV'),crops[ci]);moBand()});
+moBand();
+$('#startSession').addEventListener('click',async()=>{closeModal();sessions.unshift({id:'KR-26K-0409',crop:crops[ci].split(' ')[0],truck:'HR 26 9031',t:24,m:mo,stage:0,open:true});sessions.forEach((s,i)=>s.open=i===0);
+  if(cur!=='sessions'){await wait(200);await go('sessions')}sessF='active';$$('[data-chips="sess"] .chip').forEach(c=>c.classList.toggle('on',c.dataset.f==='active'));renderSess();await wait(150);toast('Session KR-26K-0409 started on line 4')});
+// stoppage
+let stv=41;$('#stM').addEventListener('click',()=>{stv=Math.max(1,stv-1);tick($('#stV'),stv)});$('#stP').addEventListener('click',()=>{stv++;tick($('#stV'),stv)});
+$('#saveStop').addEventListener('click',async()=>{closeModal();await wait(200);tick($('#dtMin'),(17+stv)+' min');toast('Stoppage saved · manager notified')});
+
+/* ================= QUALITY ================= */
+const DEC=[['KR-26K-0377','Maize KH-114 · 512 bags · held 2 days','Germination below standard','p-red',[['Germination','57%','needs 60% or more','bad'],['Purity','98.4%','needs 98% or more'],['Moisture','11.2%','needs 12% or less']],'Second sample drawn this morning, result due by 18:00.','Release anyway'],
+ ['MD-26K-0244','Paddy RP-56 · 408 bags · held 1 day','Moisture above limit','p-amb',[['Germination','84%','needs 80% or more'],['Purity','98.9%','needs 98% or more'],['Moisture','13.4%','needs 13% or less','warn']],'Back on the drier since 06:00. Retest once it settles.','Release anyway'],
+ ['JL-26K-0190','Cotton CS-202 · 281 bags · held 4 hours','Waiting on purity','p-soft',[['Germination','88%','needs 65% or more'],['Purity','Pending','needs 98% or more'],['Moisture','9.1%','needs 10% or less']],'Germination and moisture are clear. Purity count is still running.','Release anyway'],
+ ['KN-26K-0121','Maize KH-114 · 466 bags · held 6 hours','All three tests clear','p-grn',[['Germination','91%','needs 60% or more'],['Purity','99.1%','needs 98% or more'],['Moisture','10.4%','needs 12% or less']],'Nothing is blocking this lot. Release sends it to storage or dispatch.','Release lot']];
+$('#decisions').innerHTML=DEC.map(([id,s,tag,tc,tests,foot,rel],i)=>`<div class="decision" data-i="${i}"><div class="t"><span><b>${id}</b><small>${s}</small></span><span class="pill ${tc}">${tag}</span></div>
+  <div class="tests">${tests.map(([n,v,r,c])=>`<div class="${c||''}"><span>${n}</span><b>${v}</b><em>${r}</em></div>`).join('')}</div>
+  <div class="dfoot">${foot}<button class="btn white tap" data-dec="reject" style="box-shadow:inset 0 0 0 1.5px var(--line)">Reject</button><button class="btn dark tap" data-dec="release">${rel}</button></div></div>`).join('');
+let held=5,rel=9,onhold=4;
+$('#decisions').addEventListener('click',async e=>{const b=e.target.closest('[data-dec]');if(!b)return;const card=b.closest('.decision');const id=$('b',card).textContent;
+  const h=card.offsetHeight;await card.animate([{opacity:1,transform:'none'},{opacity:0,transform:'translateX(24px) scale(.98)'}],{duration:320,easing:OUT,fill:'forwards'}).finished;
+  card.animate([{height:h+'px',marginTop:'12px',paddingTop:'16px',paddingBottom:'16px'},{height:'0px',marginTop:'0px',paddingTop:'0px',paddingBottom:'0px'}],{duration:420,easing:E,fill:'forwards'}).finished.then(()=>card.remove());
+  onhold--;tick($('#qOn'),Math.max(0,onhold)+' on hold');
+  if(b.dataset.dec==='release'){rel++;tick($('#qRel'),rel);held=Math.max(0,held-1);tick($('#qHold'),held);toast(id+' released to storage')}else toast(id+' sent back for reprocessing');
+  const q=$('#bQual');q.textContent=Math.max(0,+q.textContent-1);q.animate([{transform:'scale(1.5)'},{transform:'none'}],{duration:500,easing:SNAP})});
+const QB=[88,80,90,71,82,56,78,85];
+$('#qBars').innerHTML=QB.map((v,i)=>`<i class="${v<60?'lo':''}" style="height:${Math.max(4,(v-50)/50*100)}%;animation-delay:${200+i*60}ms" title="W${39+i}: ${v}%"></i>`).join('');
+// lab result modal
+const RD=[['Germination','Standard asks for 60% or more',57.0,60,'min'],['Genetic purity','Standard asks for 98% or more',98.4,98,'min'],['Moisture','Standard asks for 12% or less',11.2,12,'max']];
+$('#readings').innerHTML=RD.map(([n,s,v],i)=>`<div class="reading" data-i="${i}"><span><b>${n}</b><small>${s}</small></span><span class="pill"></span><div class="stepc"><button class="circ" data-d="-1">${ico('minus')}</button><span class="val">${v.toFixed(1)}%</span><button class="circ l" data-d="1">${ico('plus')}</button></div></div>`).join('');
+function evalLab(){let bad=0;$$('#readings .reading').forEach((r,i)=>{const [, ,v,lim,k]=RD[i];const ok=k==='min'?v>=lim:v<=lim;if(!ok)bad++;r.className='reading '+(ok?'ok':'bad');$('.pill',r).textContent=ok?'Inside the standard':'Below the standard';if(!ok&&k==='max')$('.pill',r).textContent='Above the standard'});
+  const a=$('#labAlert');a.classList.toggle('ok',!bad);a.firstElementChild.outerHTML=ico(bad?'warn':'check');$('#labAlertTx').textContent=bad?`${bad===1?'One reading is':bad+' readings are'} outside the standard, so the lot goes on hold when you save.`:'All three readings are inside the standard. The lot is released when you save.'}
+$('#readings').addEventListener('click',e=>{const b=e.target.closest('[data-d]');if(!b)return;const r=b.closest('.reading'),i=+r.dataset.i;RD[i][2]=+(RD[i][2]+(+b.dataset.d)*(i===0?1:.1)).toFixed(1);tick($('.val',r),RD[i][2].toFixed(1)+'%');evalLab()});
+evalLab();
+$('#saveLab').addEventListener('click',()=>{const bad=$$('#readings .bad').length;closeModal();setTimeout(()=>toast(bad?'Lab result saved · KR-26K-0377 on hold':'Lab result saved · KR-26K-0377 released'),180)});
+$('#testsT').addEventListener('click',e=>{const t=e.target.closest('.tg');if(t)t.classList.toggle('on')});
+$('#raiseSample').addEventListener('click',()=>{if(!$$('#testsT .on').length){shake($('#testsT'));return}closeModal();setTimeout(()=>toast('Sample SM-26K-1183 raised for the lab'),180)});
+
+/* ================= STORAGE ================= */
+let BAYS=[['Bay 1',96,'3,120'],['Bay 2',88,'2,840'],['Bay 3',64,'2,060'],['Bay 4',71,'2,290'],['Bay 5',100,'3,240'],['Bay 6',45,'1,450'],['Bay 7',33,'1,070'],['Bay 8',72,'2,350']];
+let selBay=null;
+function renderBays(){$('#bayStrip').innerHTML=BAYS.map(([n,p,b])=>`<button class="baycard${selBay===n?' on':''}" data-b="${n}"><span class="t"><b>${n}</b><em style="color:${p>=95?'var(--red)':'var(--ink2)'}">${p}%</em></span><div class="bar" style="width:auto"><i style="width:${p}%;background:${p>=95?'#C9533F':'var(--ink)'}"></i></div><small>${b} bags</small></button>`).join('')+`<div class="addbay" data-open="m-bay"><div><i>${ico('plus')}</i>Add a bay</div></div>`;
+  if(BAYS.length>8)$('#bayStrip').style.gridTemplateColumns=`repeat(${BAYS.length},1fr) 98px`}
+renderBays();
+let STOR=[['KR-26K-0394','Paddy RP-56',408,'Bay 3','Today, 09:40','0 days','Released'],['KR-26K-0390','Maize KH-114',497,'Bay 3','Yesterday, 21:05','1 day','Released'],['KR-26K-0377','Maize KH-114',512,'Bay 1','30 Oct, 18:20','3 days','On hold'],
+ ['KR-26K-0362','Cotton CS-202',281,'Bay 7','27 Oct, 14:10','6 days','Released'],['KR-26K-0344','Maize KH-114',466,'Bay 5','21 Oct, 11:35','12 days','Released'],['KR-26K-0301','Paddy RP-56',389,'Bay 2','12 Oct, 16:50','21 days','On hold'],['KR-26K-0188','Maize KH-114',520,'Bay 1','22 Sep, 10:15','41 days','Released']];
+let storF='all';
+function renderStor(anim){const rows=STOR.filter(r=>(storF==='all'||(storF==='ready'?r[6]==='Released':r[6]==='On hold'))&&(!selBay||r[3]===selBay));
+  $('#storRows').innerHTML=rows.map(([id,c,b,bay,inn,h,s])=>`<tr class="rowl" data-id="${id}"><td><b style="font-weight:600;font-size:15px">${id}</b><small>${c}</small></td><td><b style="font-weight:600">${b}</b></td><td>${bay}</td><td>${inn}</td><td>${h}</td><td><span class="pill ${s==='Released'?'p-grn':'p-red'}">${s}</span></td>
+   <td style="text-align:right;white-space:nowrap"><button class="mini w tap" data-mv>Move</button> <button class="mini ${s==='Released'?'l tap':'d'}" data-sd>Dispatch</button></td></tr>`).join('')||`<tr><td colspan="7" style="text-align:center;color:var(--mut);padding:24px">Nothing here yet.</td></tr>`;
+  $('#lotCount').textContent=rows.length+' lots';
+  if(anim)$$('#storRows tr').forEach((r,i)=>r.animate([{opacity:0,transform:'translateY(8px)'},{opacity:1,transform:'none'}],{duration:420,delay:i*35,easing:OUT,fill:'backwards'}))}
+renderStor();
+$('[data-chips="stor"]').addEventListener('pick',e=>{storF=e.detail;renderStor(true)});
+$('#bayStrip').addEventListener('click',e=>{const b=e.target.closest('.baycard');if(!b)return;selBay=selBay===b.dataset.b?null:b.dataset.b;$$('.baycard').forEach(x=>x.classList.toggle('on',x.dataset.b===selBay));
+  $('#bayHint').textContent=selBay?`Showing ${selBay}. Tap it again to see every bay.`:'Tap a bay to see what is in it';renderStor(true)});
+let mvId=null,mvTo='Bay 7';
+$('#storRows').addEventListener('click',e=>{const tr=e.target.closest('tr[data-id]');if(!tr)return;const r=STOR.find(x=>x[0]===tr.dataset.id);
+  if(e.target.closest('[data-mv]')){mvId=r[0];$('#mvTitle').textContent='Move '+r[0];$('#mvFrom').textContent=r[3];$('#mvBags').textContent=`${r[2]} bags, ${Math.ceil(r[2]/256)} pallet loads`;renderBayOpts(r[3]);openModal('m-move')}
+  if(e.target.closest('[data-sd]')){if(r[6]!=='Released'){shake(e.target.closest('[data-sd]'));toast(r[0]+' is on hold, it cannot leave yet');return}
+    sdId=r[0];$('#sdTitle').textContent=`Send ${r[0]} to dispatch`;$('#sdStats').innerHTML=[['Crop',r[1]],['Bags',r[2]],['In '+r[3]+' since',r[4].replace(',','')],['Release','Cleared']].map(([a,b],i)=>`<div style="background:${i===3?'var(--grnbg)':'var(--soft)'};border-radius:14px;padding:12px 14px"><small style="font-size:12px;color:var(--mut)">${a}</small><b style="display:block;font-size:17px;${i===3?'color:var(--grn)':''}">${b}</b></div>`).join('');
+    $('#sdBags').value=r[2];$('#sdFoot').firstChild.textContent=`${r[3]} frees up by ${r[2]} bags once this moves.`;openModal('m-send')}});
+const FREE={'Bay 1':'4% free','Bay 2':'12% free','Bay 3':'36% free','Bay 4':'29% free','Bay 5':'Full','Bay 6':'55% free','Bay 7':'67% free','Bay 8':'28% free'};
+function renderBayOpts(from){$('#bayOpts').innerHTML=BAYS.slice(0,8).map(([n])=>`<button class="bayo${n==='Bay 5'||n===from?' full':''}${n===mvTo?' on':''}" data-b="${n}"><b>${n}</b><small>${n===from?'Now here':FREE[n]}</small></button>`).join('')}
+$('#bayOpts').addEventListener('click',e=>{const b=e.target.closest('.bayo');if(!b)return;if(b.classList.contains('full')){shake(b);return}mvTo=b.dataset.b;$$('.bayo').forEach(x=>x.classList.toggle('on',x===b));tick($('#mvTo'),mvTo);tick($('#mvBtn'),mvTo)});
+$('#doMove').addEventListener('click',()=>{const r=STOR.find(x=>x[0]===mvId);if(r)r[3]=mvTo;closeModal();renderStor(true);setTimeout(()=>toast(`${mvId} moved to ${mvTo}`),180)});
+let sdId=null;$('#doSend').addEventListener('click',()=>{STOR=STOR.filter(x=>x[0]!==sdId);closeModal();renderStor(true);addWaiting(sdId);setTimeout(()=>toast(sdId+' sent to dispatch'),180)});
+$('#addBayBtn').addEventListener('click',()=>{const n=$('#nbName').value.trim()||'Bay 9';if(!BAYS.find(b=>b[0]===n))BAYS.push([n,0,'0']);closeModal();renderBays();setTimeout(()=>toast(n+' added to the main warehouse'),180);
+  const last=$$('.baycard').pop();last&&last.animate([{opacity:0,transform:'scale(.8)'},{opacity:1,transform:'none'}],{duration:600,delay:200,easing:SNAP,fill:'backwards'})});
+
+/* ================= DISPATCH ================= */
+let LOADS=[{v:'HR 38 7712',who:'Ramesh Yadav · 98xx xx4471 · 820 bags on 2 lots',to:'Hisar depot',st:1,f:'loading'},{v:'PB 09 3340',who:'Gurmeet Singh · 97xx xx1180 · 640 bags on 2 lots',to:'Sirsa dealer',st:2,f:'sign'},
+ {v:'HR 26 5509',who:'Dinesh Kumar · 96xx xx8032 · 1,020 bags on 3 lots',to:'Rohtak depot',st:3,f:'gone'},{v:'HR 44 2210',who:'Mohit Rana · 99xx xx6614 · 460 bags on 1 lot',to:'Karnal dealer',st:0,f:'draft'}];
+const LST=['Draft','Loading','Gate pass signed','Left the plant'],LPILL=['p-soft','p-amb','p-lime','p-grn'];
+const LFOOT=['A draft is open. Add the lots, then load.','Bags are going on now. Weigh the vehicle before the gate pass.','Signed and stamped. Mark it out when the vehicle clears the gate.','Out at the time shown. The gate pass is filed with SATHI.'];
+let loadF='all',passFor=1;
+function renderLoads(){$('#loads').innerHTML=LOADS.map((l,i)=>({l,i})).filter(({l})=>loadF==='all'||l.f===loadF).map(({l,i})=>`<div class="load" data-i="${i}"><div class="t"><span class="ibox" style="background:#fff"><i data-i="truck"></i></span><span><b>${l.v}</b><small>${l.who}</small></span><span class="rt"><span class="pill ${LPILL[l.st]}">${LST[l.st]}</span><small style="font-size:12px;color:var(--mut)">${l.to}</small></span></div>
+  <div class="track"><span class="fill" style="width:${l.st/3*75}%"></span>${LST.map((n,k)=>`<div class="${k<l.st?'d':k===l.st?'n':''}"><i></i>${n}</div>`).join('')}</div>
+  <div class="dfoot">${LFOOT[l.st]}${l.st<3?`<button class="btn white tap" data-print style="box-shadow:inset 0 0 0 1.5px var(--line)">Print gate pass</button>`:`<button class="btn white tap" data-print style="box-shadow:inset 0 0 0 1.5px var(--line)">Print gate pass</button>`}
+  ${l.st===0?'<button class="btn dark tap" data-load>Start loading</button>':l.st===1?'<button class="btn dark tap" data-sign>Sign gate pass</button>':l.st===2?'<button class="btn dark tap" data-out>Mark vehicle out</button>':'<button class="btn soft" style="color:var(--mut2);cursor:default">Dispatch closed</button>'}</div></div>`).join('');paint($('#loads'))}
+renderLoads();
+$('[data-chips="loads"]').addEventListener('pick',e=>{loadF=e.detail;renderLoads();$$('#loads .load').forEach((r,i)=>r.animate([{opacity:0,transform:'translateY(10px)'},{opacity:1,transform:'none'}],{duration:450,delay:i*50,easing:OUT,fill:'backwards'}))});
+function stepLoad(i,to){const l=LOADS[i];l.st=to;l.f=['draft','loading','sign','gone'][to];renderLoads();const card=$(`#loads .load[data-i="${i}"]`);if(card){$('.track .fill',card).animate([{width:((to-1)/3*75)+'%'},{width:(to/3*75)+'%'}],{duration:900,easing:E});$$('.track i',card)[to].animate([{transform:'scale(.4)'},{transform:'none'}],{duration:600,easing:SNAP})}}
+$('#loads').addEventListener('click',e=>{const c=e.target.closest('.load');if(!c)return;const i=+c.dataset.i;
+  if(e.target.closest('[data-print]'))toast('Gate pass for '+LOADS[i].v+' sent to the printer');
+  if(e.target.closest('[data-load]')){stepLoad(i,1);toast(LOADS[i].v+' is loading')}
+  if(e.target.closest('[data-sign]')){passFor=i;openModal('m-pass')}
+  if(e.target.closest('[data-out]')){stepLoad(i,3);tick($('#dLeft'),+$('#dLeft').textContent+1);toast(LOADS[i].v+' left the plant · filed to SATHI')}});
+let WAIT=[['KR-26K-0394','Paddy RP-56 · 408 bags · Bay 3','2 h'],['KR-26K-0390','Maize KH-114 · 497 bags · Bay 3','14 h'],['KR-26K-0362','Cotton CS-202 · 281 bags · Bay 7','6 days'],['KR-26K-0344','Maize KH-114 · 466 bags · Bay 5','12 days'],['KR-26K-0188','Maize KH-114 · 520 bags · Bay 1','41 days']];
+function renderWait(){$('#waitList').innerHTML=WAIT.map(([id,s,a])=>`<div class="wl"><span><b>${id}</b><small>${s}</small></span><span class="ago">${a}</span><button class="plus" data-w="${id}">${ico('plus')}</button></div>`).join('')}
+renderWait();
+function addWaiting(id){if(!WAIT.find(w=>w[0]===id)){const r=STOR.find(x=>x[0]===id);WAIT.unshift([id,'Just released · Bay 3','now'])}renderWait()}
+$('#waitList').addEventListener('click',e=>{const b=e.target.closest('[data-w]');if(!b)return;b.classList.toggle('done');b.innerHTML=ico(b.classList.contains('done')?'check':'plus');b.animate([{transform:'scale(.6)'},{transform:'none'}],{duration:500,easing:SNAP});
+  toast(b.classList.contains('done')?b.dataset.w+' added to HR 38 7712':b.dataset.w+' taken off the load')});
+$('#wbars').innerHTML=[['Mon',58],['Tue',72],['Wed',54],['Thu',86],['Fri',66],['Sat',44],['Sun',28]].map(([d,v],i)=>`<div><i style="height:${v}px;animation-delay:${200+i*60}ms"></i>${d}</div>`).join('');
+// new dispatch
+const LL=[['KR-26K-0394','Paddy RP-56 · 408 bags',408,1],['KR-26K-0390','Maize KH-114 · 497 bags',497,1],['KR-26K-0362','Cotton CS-202 · 281 bags',281,0]];
+$('#loadLots').innerHTML=LL.map(([id,s,b,on])=>`<div class="lotc${on?' on':''}" data-b="${b}"><span class="chk">${ico('check')}</span><b style="font-size:14px">${id}</b><span>${s}</span></div>`).join('');
+function sumLoad(){const s=$$('#loadLots .on').reduce((a,x)=>a+ +x.dataset.b,0);tick($('#loadSum'),s.toLocaleString('en-IN')+' bags')}
+$('#loadLots').addEventListener('click',e=>{const l=e.target.closest('.lotc');if(!l)return;l.classList.toggle('on');sumLoad()});
+$('#draftPass').addEventListener('click',()=>{if(!$$('#loadLots .on').length){shake($('#loadLots'));return}passFor=0;openModal('m-pass')});
+// gate pass
+const PASS=[['Gate pass number','GP-4472'],['Vehicle','PB 09 3340'],['Driver and licence','Gurmeet Singh, HR-0419882'],['Going to','Sirsa dealer, 214 km'],['Weighed out','14.82 t gross, 9.40 t net'],['Lots on board','KR-26K-0386, KR-26K-0362'],['Bags','640'],['Signed by','Suresh Kumar, plant manager']];
+mHooks['m-pass']=()=>{const l=LOADS[passFor];const rows=PASS.map(r=>r.slice());rows[1][1]=l.v;if(passFor===0){rows[2][1]='Ramesh Yadav, HR-0388211';rows[3][1]='Hisar depot, 168 km';rows[5][1]='KR-26K-0394, KR-26K-0390';rows[6][1]=$('#loadSum').textContent.replace(' bags','')}
+  $('#passRows').innerHTML=rows.map(([a,b])=>`<div class="passk"><span>${a}</span><b>${b}</b></div>`).join('');clearSig();setTimeout(sizeSig,50)};
+const cv=$('#sigC'),cx=cv.getContext('2d');let drawing=false,signed=false,lastP=null;
+function sizeSig(){const r=cv.getBoundingClientRect();cv.width=r.width/scale*2;cv.height=r.height/scale*2;cx.scale(2,2);cx.lineWidth=2.4;cx.lineCap='round';cx.lineJoin='round';cx.strokeStyle='#15150F'}
+function clearSig(){cx.clearRect(0,0,cv.width,cv.height);signed=false;$('#sigHint').style.opacity=1;$('#sigLine').style.opacity=0}
+const pt=e=>{const r=cv.getBoundingClientRect();return {x:(e.clientX-r.left)/scale,y:(e.clientY-r.top)/scale}};
+cv.addEventListener('pointerdown',e=>{drawing=true;lastP=pt(e);cv.setPointerCapture(e.pointerId);$('#sigHint').style.opacity=0});
+cv.addEventListener('pointermove',e=>{if(!drawing)return;const p=pt(e);cx.beginPath();cx.moveTo(lastP.x,lastP.y);cx.quadraticCurveTo(lastP.x,lastP.y,p.x,p.y);cx.stroke();lastP=p;signed=true});
+cv.addEventListener('pointerup',()=>{drawing=false;if(signed)$('#sigLine').style.opacity=1});
+$('#sigClear').addEventListener('click',clearSig);
+function autoSign(){const w=cv.width/2,h=cv.height/2;cx.beginPath();let x=w*.25,y=h*.5;cx.moveTo(x,y);for(let i=0;i<=60;i++){const t=i/60;cx.lineTo(w*.25+t*w*.5,h*.5+Math.sin(t*12)*h*.12*(1-t*.5)-t*10)}cx.stroke();signed=true;$('#sigHint').style.opacity=0;$('#sigLine').style.opacity=1}
+$('#issuePass').addEventListener('click',async()=>{if(!signed){autoSign();await wait(450)}closeModal();if(passFor===0){LOADS[0].st<2&&stepLoad(0,2)}else stepLoad(passFor,2);
+  const d=$('#dSign');tick(d,Math.max(0,+d.textContent-1));if(cur!=='dispatch')await go('dispatch');setTimeout(()=>toast('Gate pass GP-4472 issued · filed to SATHI'),200)});
+
+/* ================= LOTS ================= */
+const LOTS=[['Today, Monday, 2 November 2026','2 dispatched, 1 stored','1,394 bags',[['KR-26K-0398','Maize KH-114',512,86.1,91,'d','02 Nov, 11:20'],['KR-26K-0394','Paddy RP-56',408,85.0,84,'s','02 Nov, 09:05'],['MD-26K-0251','Maize KH-114',474,84.4,88,'d','02 Nov, 08:10']]],
+ ['Yesterday, Sunday, 1 November 2026','1 dispatched, 2 stored','1,144 bags',[['KR-26K-0390','Maize KH-114',497,81.5,79,'s','01 Nov, 20:40'],['KR-26K-0386','Cotton CS-202',281,87.8,88,'d','01 Nov, 17:10'],['JL-26K-0196','Paddy RP-56',366,83.2,82,'s','01 Nov, 15:25']]],
+ ['Saturday, 31 October 2026','1 dispatched, 1 stored','751 bags',[['KR-26K-0381','Maize KH-114',449,83.1,86,'s','31 Oct, 14:25'],['KN-26K-0128','Cotton CS-202',302,88.6,90,'d','31 Oct, 12:40']]],
+ ['Friday, 30 October 2026','0 dispatched, 2 stored','910 bags',[['MD-26K-0244','Paddy RP-56',398,79.4,57,'s','30 Oct, 19:50'],['KR-26K-0377','Maize KH-114',512,80.2,57,'s','30 Oct, 18:20']]],
+ ['Tuesday, 27 October 2026','1 dispatched, 0 stored','264 bags',[['KR-26K-0362','Cotton CS-202',264,84.9,87,'d','27 Oct, 09:30']]]];
+let lotCrop='all';
+function renderLots(){let n=0;$('#lotRows').innerHTML=LOTS.map(([d,s,b,rows])=>{const rs=rows.filter(r=>lotCrop==='all'||r[1].startsWith(lotCrop));n+=rs.length;if(!rs.length)return '';
+  return `<tr class="dayh"><td colspan="6"><b>${d}</b><span class="n">${rs.length}</span><span style="font-size:12px;color:var(--mut)">${s}</span></td><td style="text-align:right;font-size:12px;color:var(--mut)">${b}</td></tr>`+
+  rs.map(([id,c,bg,rec,g,w,f])=>`<tr class="rowl" data-trace="${id}" style="cursor:pointer"><td><b style="font-weight:600;font-size:15px">${id}</b><small>${c}</small></td><td>${bg}</td><td style="color:${rec<82?'var(--amb)':''}">${rec.toFixed(1)}%</td>
+   <td><span class="pill ${g>=80?'p-grn':g>=70?'p-amb':'p-red'}">${g}%</span></td><td><span class="gpill ${w==='d'?'p-lime':'p-soft'}">${ico(w==='d'?'truck':'archive')}Went to ${w==='d'?'dispatch':'storage'}</span></td><td>${f}</td><td><span class="chev">${ico('chev-right')}</span></td></tr>`).join('')}).join('');
+  $('#lotsN').textContent=n+' lots shown'}
+renderLots();
+$('[data-chips="lcrop"]').addEventListener('pick',e=>{lotCrop=e.detail;renderLots();$$('#lotRows tr').forEach((r,i)=>r.animate([{opacity:0,transform:'translateY(8px)'},{opacity:1,transform:'none'}],{duration:400,delay:i*25,easing:OUT,fill:'backwards'}))});
+$('#lotRows').addEventListener('click',e=>{const r=e.target.closest('[data-trace]');if(!r)return;$('#traceIn').value=r.dataset.trace;openModal('m-trace')});
+(function seg(){const s=$('#seg'),k=$('.k',s);const place=b=>{k.style.width=b.offsetWidth+'px';k.style.transform=`translateX(${b.offsetLeft-3}px)`};
+  requestAnimationFrame(()=>place($('.on',s)));s.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;$$('button',s).forEach(x=>x.classList.toggle('on',x===b));place(b);if(b.textContent!=='Day')toast('Grouped by '+b.textContent.toLowerCase())})})();
+// trace
+$('#traceStats').innerHTML=[['Lot and crop','KR-26K-0398 · Maize KH-114'],['Bags','512'],['Recovery','86.1%'],['Germination','91%','g'],['Where it went','Went to dispatch','l'],['Finished','02 Nov, 11:20']].map(([a,b,c])=>`<div style="background:${c==='g'?'var(--grnbg)':c==='l'?'var(--lime)':'var(--soft)'};border-radius:14px;padding:10px 14px"><small style="font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--mut);font-weight:600">${a}</small><b style="display:block;font-size:17px;margin-top:3px">${b}</b></div>`).join('');
+$('#tBefore').innerHTML=[['Foundation seed','Tag FS-2026-11847, 24 bags from the state farm','12 Jun 2026'],['Grower and plot','Jaspal Sidhu, 4.2 acres, Nilokheri block','28 Jun 2026'],['First field inspection','Passed, isolation distance met','19 Jul 2026'],['Second field inspection','Passed, off types inside the limit','14 Aug 2026'],['Harvested and carted','HR 32 4052 loaded at the farm','1 Nov 2026']].map(([a,b,c])=>`<div class="it"><b>${a}</b><small>${b}</small><em>${c}</em></div>`).join('');
+$('#tAfter').innerHTML=[['Processed and packed','512 q out, 512 bags, tags TS-9920 to TS-9948','2 Nov, 10:05'],['Lab released','Germination 91%, purity 99.1%, moisture 10.4%','2 Nov, 10:52'],['Gate pass GP-4471','HR 38 7712, Ramesh Yadav driving','2 Nov, 11:20'],['Hisar depot','Signed for by the depot keeper, 512 bags','2 Nov, 15:48']].map(([a,b,c])=>`<div class="it"><b>${a}</b><small>${b}</small><em>${c}</em></div>`).join('');
+$('#tInside').innerHTML=[['Weighed in at the gate','Anjali Rao · gate','06:40',[['truck','HR 32 4052'],['gross','595 q'],['moisture','13.1%']]],['Lot opened on line 1','Suresh Kumar · plant manager','06:52',[['lot','KR-26K-0398'],['session','started']]],['Intake','Ramesh Yadav · line 1','06:52 to 07:34',[['in','595 q'],['cleaned of trash','12 q']]],
+ ['Gravity table','Ramesh Yadav · line 1','07:34 to 08:46',[['light seed out','41 q'],['running at','8.6 q a min']]],['Stopped, feed belt slipping','Ramesh Yadav · 12 min, logged','08:12 to 08:24',[['downtime','12 min']],1],['Cleaning and grading','Vikram Singh · line 1','08:46 to 09:58',[['screen','6.5 mm'],['sample drawn','SM-26K-1174']]],
+ ['Treatment and packaging','Vikram Singh · line 1','09:58 to 11:05',[['out','512 q'],['bags','512'],['tags','TS-9920 to 9948']]],['Lab released the lot','Meena Kaur · lab in charge','10:52',[['germination','91%'],['purity','99.1%'],['moisture','10.4%']]],['Finished, sent to dispatch','Suresh Kumar · plant manager','11:20',[['recovery','86.1%'],['gate pass','GP-4471']]]]
+ .map(([a,b,t,ch,red])=>`<div class="tl${red?' red':''}"><b>${a}</b><small>${b}</small><span class="tm">${t}</span><div class="chips">${ch.map(([k,v])=>`<span>${k} <b>${v}</b></span>`).join('')}</div></div>`).join('');
+mHooks['m-trace']=()=>{$$('#tInside .tl').forEach((n,i)=>n.animate([{opacity:0,transform:'translateY(10px)'},{opacity:1,transform:'none'}],{duration:500,delay:250+i*70,easing:OUT,fill:'backwards'}))};
+
+/* ================= CONNECTORS ================= */
+const GOES=[['Lot registration','A new lot number the moment intake is weighed in.','Lot ID and crop variety','As it happens','42 today',1,'doc'],['Source seed and tag','Which foundation seed the lot came from, and its tag.','Parent lot and tag number','As it happens','Paused',0,'leaf'],
+ ['Processing record','Weight in, weight out, recovery and the four stages.','Quantity in, quantity out','On finishing a session','38 today',1,'trend'],['Lab results','Every test result with the sample number.','Germination, purity, moisture','On release','31 today',1,'flask'],
+ ['Certification tags','Tag numbers printed against the lot, and how many bags.','Tag series and bag count','On packing','29 today',1,'shield'],['Gate pass and dispatch','Vehicle number, where it went and how many bags left.','Vehicle, buyer and quantity','On the vehicle leaving','32 today',1,'truck']];
+$('#goesList').innerHTML=GOES.map(([a,b,c,d,n,on,ic],i)=>`<div class="goes"><span class="ibox" style="width:36px;height:36px;background:var(--soft)">${ico(ic)}</span><span><b>${a}</b><p>${b}</p><div class="as">Goes as <b>${c}</b> · ${d}</div></span><span class="rt"><span data-cnt>${n}</span><span class="sw${on?' on':''}" data-g="${i}"></span></span></div>`).join('');
+$('#goesList').addEventListener('click',e=>{const s=e.target.closest('.sw');if(!s)return;s.classList.toggle('on');const on=s.classList.contains('on'),g=GOES[s.dataset.g];const c=$('[data-cnt]',s.parentNode);tick(c,on?(g[4]==='Paused'?'Resumed':g[4]):'Paused');
+  const n=$$('#goesList .sw.on').length;tick($('#onCount'),n+' of 6 on');toast(g[0]+(on?' now files to SATHI':' paused, nothing goes until you turn it back on'))});
+$('#backList').innerHTML=[['Grower registry','Names, plots and acreage already on SATHI','1,908','user'],['Variety master','Approved varieties and their standards','64','leaf'],['Certificate numbers','Issued against lots you filed','1,284','shield'],['Inspection outcomes','Field inspection results by plot','3,812','search']].map(([a,b,n,ic])=>`<div class="wl"><span class="ibox" style="width:34px;height:34px;background:var(--soft)">${ico(ic)}</span><span><b>${a}</b><small>${b}</small></span><b style="margin-left:auto">${n}</b></div>`).join('');
+const SYNC=[['Gate pass GP-4471 filed for HR 38 7712','11:22, 32 records',''],['Lab results for KN-26K-0121 accepted','11:49, 3 records',''],['Lot MD-26K-0244 rejected, grower plot not on the registry','09:14, needs a fix','r'],['6 processing records waiting on the next sync','09:02','a'],['Tag series TS-9920 to TS-9948 filed','08:40, 29 records',''],['Variety master pulled in, 2 new varieties','06:00, nightly','']];
+function renderSync(){$('#syncList').innerHTML=SYNC.slice(0,5).map(([a,b,c])=>`<div class="act"><i class="${c}"></i><span><b>${a}</b><small>${b}</small></span></div>`).join('')}renderSync();
+$('#syncNow').addEventListener('click',async()=>{const b=$('#syncNow');if(b.dataset.busy)return;b.dataset.busy=1;b.innerHTML='Syncing<span class="bi"><span class="spin" style="border-color:rgba(0,0,0,.2);border-top-color:#15150F"></span></span>';
+  await wait(1400);b.innerHTML='Sync now<span class="bi">'+ico('refresh')+'</span>';delete b.dataset.busy;tick($('#cWait'),'0');tick($('#cFiled'),'220');tick($('#lastSync'),'Last sync just now');
+  SYNC.unshift(['6 processing records filed','Just now, 6 records','']);renderSync();$('#syncList .act').animate([{opacity:0,transform:'translateY(-8px)'},{opacity:1,transform:'none'}],{duration:500,easing:OUT});toast('Synced 6 records with SATHI')});
+
+/* ================= CALENDAR ================= */
+const EV={1:[['Haryana Day','hol']],5:[['Chhath Puja','fes']],8:[['Guru Nanak Jayanti','hol']],11:[['Family day at the plant','pe']],14:[["Children’s Day",'fes']],16:[['Meena on leave','lv']],19:[['Staff cricket match','pe']],21:[['Ramesh on leave','lv']],24:[['Guru Tegh Bahadur day','hol']],26:[['Constitution Day','fes']],28:[['Long weekend starts','pe']]};
+const DESC={1:'Gazetted holiday, plant closed',5:'Half the night shift has asked for the day',8:'Gazetted holiday, plant closed',11:'Families welcome, lunch in the shed',14:'Sweets for the staff quarters',16:'Lab cover from Kurnool',19:'Karnal against the Nilokheri co-op',21:'Driver cover arranged',24:'One shift only',26:'Flag at the gate, plant running',28:'Saturday and Sunday off'};
+const CLOSED={1:'Closed',8:'Closed',24:'One shift'};const WD=['MON','TUE','WED','THU','FRI','SAT','SUN'];
+let selDay=2;
+function renderCal(){$('#cgrid').innerHTML=WD.map(w=>`<div class="wd">${w}</div>`).join('')+Array.from({length:42},(_,i)=>{const d=i-5;if(d<1||d>30)return '<div class="cday empty"></div>';
+  return `<button class="cday${CLOSED[d]&&CLOSED[d]==='Closed'?' closed':''}${CLOSED[d]==='One shift'?' closed':''}${d===2?' today':''}${(i%7)===6?' sun':''}${d===selDay?' sel':''}" data-d="${d}"><span class="dn"><span>${d}</span>${CLOSED[d]?`<em>${CLOSED[d]}</em>`:''}</span>${(EV[d]||[]).map(([n,k])=>`<span class="ev ${k}">${n}</span>`).join('')}</button>`}).join('')}
+function renderDay(){const ev=EV[selDay]||[];const dn=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][(selDay-1)%7];
+  $('#dayCard').innerHTML=`<h3 class="cardh" style="font-size:18px">${selDay===2?'Today, ':''}${dn} ${selDay} November</h3><span class="pill ${CLOSED[selDay]?'p-red':'p-grn'}" style="margin-top:8px">${CLOSED[selDay]?(CLOSED[selDay]==='Closed'?'Plant closed':'One shift only'):'Plant running'}</span>`+
+   (ev.length?ev.map(([n,k])=>`<div style="background:var(--soft);border-radius:16px;padding:16px;margin-top:12px"><span class="ev ${k}" style="display:inline-flex;font-size:12px">${n}</span><p style="font-size:13px;color:var(--mut);margin-top:8px">${DESC[selDay]||''}</p></div>`).join('')
+   :`<div style="background:var(--soft);border-radius:16px;padding:26px 16px;margin-top:12px;text-align:center"><span class="ibox" style="margin:0 auto 10px;background:#fff">${ico('calendar')}</span><b style="font-size:15px">Nothing on this day</b><p style="font-size:13px;color:var(--mut);margin-top:4px">An ordinary working day at Karnal.</p></div>`)}
+renderCal();renderDay();
+$('#cgrid').addEventListener('click',e=>{const c=e.target.closest('.cday[data-d]');if(!c)return;selDay=+c.dataset.d;$$('.cday').forEach(x=>x.classList.toggle('sel',x===c));renderDay();$('#dayCard').animate([{opacity:.4,transform:'translateY(6px)'},{opacity:1,transform:'none'}],{duration:420,easing:OUT})});
+const UP=[[5,'Chhath Puja','Half the night shift has asked for the day','fes'],[8,'Guru Nanak Jayanti','Gazetted holiday, plant closed','hol'],[11,'Family day at the plant','Families welcome, lunch in the shed','pe'],[14,"Children’s Day",'Sweets for the staff quarters','fes'],[16,'Meena on leave','Lab cover from Kurnool','lv'],[19,'Staff cricket match','Karnal against the Nilokheri co-op','pe']];
+const UPC={fes:'background:var(--lime)',hol:'background:var(--redbg);color:var(--red)',pe:'background:var(--ink);color:#fff',lv:'background:var(--ambbg);color:var(--amb)'};
+$('#upList').innerHTML=UP.map(([d,n,s,k])=>`<div class="upc"><span class="d" style="${UPC[k]}">${d}<small>NOV</small></span><span><b>${n}</b><span>${s}</span></span></div>`).join('');
+$('#closedSw').addEventListener('click',e=>e.currentTarget.classList.toggle('on'));
+
+/* ================= CHAT + TODOS ================= */
+const MSG=[['PN','Priya Nair','Lab · 15:52','Germination for KR-26K-0377 came back at 57%. I have put the lot on hold.','KR-26K-0377 on hold'],['RY','Ramesh Yadav','Line 3 · 15:20','Drier 2 belt is slipping on the feed side. Fitter has been called.','Stoppage logged, 41 min'],
+ ['SK','You','Plant manager · 15:24','Noted. Move the paddy queue to line 5 until it is back.','',1],['AR','Anjali Rao','Gate · 14:46','HR 26 9031 has been at the gate 54 minutes. Paddy, 24 t.','Oldest in the queue'],['MK','Meena Kaur','Lab · 14:10','Sample SM-26K-1182 is in. Result by 18:00.','']];
+const msgHTML=([a,n,w,t,tag,me])=>`<div class="msg${me?' me':''}"><span class="av${me?' l':''}">${a}</span><div style="flex:1"><div class="who">${n} <span>· ${w}</span></div><div class="bb">${t}</div>${tag?`<span class="tagx"><i></i>${tag}</span>`:''}</div></div>`;
+$('#msgs').innerHTML=MSG.map(msgHTML).join('');
+$('#compose').addEventListener('submit',async e=>{e.preventDefault();const v=$('#msgIn').value.trim();if(!v)return;$('#msgIn').value='';const d=document.createElement('div');d.innerHTML=msgHTML(['SK','You','Plant manager · now',v,'',1]);const m=d.firstElementChild;$('#msgs').appendChild(m);
+  m.animate([{opacity:0,transform:'translateY(14px) scale(.97)'},{opacity:1,transform:'none'}],{duration:500,easing:SNAP});$('#msgs').scrollTo({top:9e3,behavior:'smooth'});
+  await wait(1600);const r=document.createElement('div');r.innerHTML=msgHTML(['RY','Ramesh Yadav','Line 3 · now','Okay sir, on it.','']);const rm=r.firstElementChild;$('#msgs').appendChild(rm);rm.animate([{opacity:0,transform:'translateY(14px)'},{opacity:1,transform:'none'}],{duration:500,easing:OUT});$('#msgs').scrollTo({top:9e3,behavior:'smooth'})});
+let TD=[['Sign the gate pass for PB 09 3340','Dispatch, Sirsa load','Now',0,'p-red'],['Call Jaspal Sidhu about the wet paddy','Gate queue, HR 26 9031','16:30',0,''],['Log the drier 2 stoppage','Sessions, line 3','Done',1,'p-grn'],['Move KR-26K-0377 out of Bay 1','Storage, making room','18:00',0,''],['Check the tag series before packing','Connectors, SATHI','Tomorrow',0,'p-soft'],['Hand the shift over to Vikram','Shift B ends','22:00',0,'']];
+function renderTodos(){$('#todos').innerHTML=TD.map(([a,b,w,d,pc],i)=>`<div class="todo-i${d?' done':''}" data-i="${i}"><span class="cb">${ico('check')}</span><span><b>${a}</b><small>${b}</small></span><span class="when pill ${d?'p-grn':pc||'p-soft'}" style="height:24px">${d?'Done':w}</span></div>`).join('');const n=TD.filter(t=>!t[3]).length;$('#openN').textContent=n+' open';$('#todoN').textContent=n}
+renderTodos();
+$('#todos').addEventListener('click',e=>{const t=e.target.closest('.todo-i');if(!t)return;const it=TD[t.dataset.i];it[3]=it[3]?0:1;t.classList.toggle('done',!!it[3]);const p=$('.when',t);p.textContent=it[3]?'Done':it[2];p.className='when pill '+(it[3]?'p-grn':it[4]||'p-soft');
+  const n=TD.filter(x=>!x[3]).length;tick($('#openN'),n+' open');tick($('#todoN'),n)});
+$('#addTodo').addEventListener('click',()=>{TD.push(['Walk the floor before handover','Added by you','21:30',0,'']);renderTodos();const l=$$('#todos .todo-i').pop();l.animate([{opacity:0,transform:'translateY(10px)'},{opacity:1,transform:'none'}],{duration:450,easing:SNAP});$('#todos').scrollTo({top:9e3,behavior:'smooth'})});
+
+/* ---------- boot ---------- */
+paint();
+requestAnimationFrame(()=>movePill('home'));
+const v0=$('#v-home');
+async function boot(){const s=$('#splash');if(s.dataset.done)return;s.dataset.done=1;v0.classList.add('on');enter(v0,250);animRings();
+  await s.animate([{opacity:1},{opacity:0}],{duration:700,easing:'ease-in-out',fill:'forwards'}).finished;s.remove()}
+$('#splash').addEventListener('click',boot);setTimeout(boot,2000);
+document.fonts&&document.fonts.ready.then(()=>{movePill(cur);const s=$('#seg');const b=$('.on',s),k=$('.k',s);k.style.width=b.offsetWidth+'px';k.style.transform=`translateX(${b.offsetLeft-3}px)`});
+})();
+</script>
+</body>
+</html>
